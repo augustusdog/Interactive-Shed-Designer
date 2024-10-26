@@ -1,0 +1,15 @@
+canvas{
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 0;
+}
+
+#user_options{
+  position: fixed;
+  z-index: 20;
+  color: white;
+  border: 2 px solid red;
+  font-size: 40px;
+  background-color: brown;
+}

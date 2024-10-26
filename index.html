@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="stylesheet" href="./style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sean's Website</title>
+  </head>
+  <body>
+    <main>
+      <div id="overarching">
+      <canvas id="bg"></canvas>
+    </div>
+    </main>
+
+      <script type="importmap">
+      {
+        "imports": {
+            "three": "./node_modules/three/build/three.module.js",
+            "OrbitControls": "https://unpkg.com/three@0.138.0/examples/jsm/controls/OrbitControls.js",
+            "dat.gui": "https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.module.js",
+            "three/webgpu": "./node_modules/three/build/three.webgpu.js",
+            "three-bvh-csg": "./node_modules/three-bvh-csg/build/index.module.js",
+            "three-mesh-bvh": "./node_modules/three-mesh-bvh/build/index.module.js",
+            "bleh": "./node_modules/three/examples/jsm/libs/lil-gui.module.min.js",
+            "blehh": "./node_modules/three/examples/jsm/controls/TransformControls.js"
+        }
+      }
+      </script>
+
+    <script type="module" src="./main.js"></script>
+  
+</body>
