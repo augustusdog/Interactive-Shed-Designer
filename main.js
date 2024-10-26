@@ -267,7 +267,7 @@ side2.position.set(0,0,wallDepth1.geometry.parameters.depth/2)
 scene.add( side2 );
 
 side2.material.transparent = true;
-side2.material.opacity = 0.5;
+side2.material.opacity = 0.2;
 
 const windowParams = {
   addWindow: false //Default state is window not added
@@ -288,8 +288,28 @@ bar1.operation = ADDITION;
 const bar2 = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), brushMat );
 bar2.operation = ADDITION;
 
+const inv_hole = hole
+inv_hole.operation = ADDITION
+
+const inv_frame = frame
+inv_frame.operation = SUBTRACTION
+
+const inv_hole2 = hole2
+inv_hole2.operation = ADDITION
+
+const inv_bar1 = bar1
+inv_bar1.operation = SUBTRACTION
+
+const inv_bar2 = bar2
+inv_bar2.operation = SUBTRACTION
+
+const invWindowGroup = new OperationGroup()
+invWindowGroup.add(inv_hole, inv_frame, inv_hole2, inv_bar1, inv_bar2)
+
 const windowGroup = new OperationGroup();
 windowGroup.add( hole, frame, hole2, bar1, bar2 );
+
+const interimSide2 = side2;
 
 function windowUpdate(){
 
@@ -300,12 +320,13 @@ function windowUpdate(){
     if (windowParams.addWindow == true){
       if (side2.children.includes(windowGroup)){}
       else{
-        side2.add( windowGroup );  
+        side2.add( windowGroup );
       }
     }
     else{
       if (side2.children.includes(windowGroup)){
         delete side2.remove(windowGroup)
+        side2.add(invWindowGroup)
       }
       else{}
     }
