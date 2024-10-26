@@ -42,14 +42,12 @@ const brickMaterial = new THREE.MeshBasicMaterial({color: 0x000000, map: brickTe
 const tilesTexture = new THREE.TextureLoader().load("tiles.jpg")
 const tilesMaterial = new THREE.MeshBasicMaterial({ map: tilesTexture});
 const blackMaterial = new THREE.MeshBasicMaterial({ color: 0x000000});
-const windowTexture = new THREE.TextureLoader().load('window.jpg')
-//const windowMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: windowTexture})
 const windowMaterial = new THREE.MeshBasicMaterial({color: 0xffffff})
 blackMaterial.side = THREE.DoubleSide;
 tilesMaterial.side = THREE.DoubleSide;
 
 let csgEvaluator;
-let result, root, brushMat, resultGridMat, wireframeObject;
+let result, side2, brushMat, resultGridMat, wireframeObject;
 
 // bunny mesh has no UVs so skip that attribute
 csgEvaluator = new Evaluator();
@@ -81,8 +79,6 @@ resultGridMat.color.set( 0xffff00 );
 const wallWidthGeom = new THREE.BoxGeometry(10, 3, 1)
 const wallWidth1 = new THREE.Mesh(wallWidthGeom, brickMaterial)
 //const wallWidth2 = new THREE.Mesh(wallWidthGeom, brickMaterial)
-
-console.log(wallWidth1.material.color.getHexString())
 
 wallWidth1.position.set(0,0,0)
 //wallWidth2.position.set(0,0,10)
@@ -264,16 +260,18 @@ function setWindowLocation(value){
 
 //Convert to csg objects
 
-root = new Operation( wallWidthGeom, brushMat );
+side2 = new Operation( wallWidthGeom, brushMat );
 
-root.position.set(0,0,wallDepth1.geometry.parameters.depth/2)
+side2.position.set(0,0,wallDepth1.geometry.parameters.depth/2)
 
-scene.add( root );
+scene.add( side2 );
 
-root.material.transparent = true;
-root.material.opacity = 0.5;
+side2.material.transparent = true;
+side2.material.opacity = 0.5;
 
-root.scale.x = 1
+const windowParams = {
+  addWindow: false //Default state is window not added
+}
 
 const hole = new Operation( new THREE.BoxGeometry( 2, 1.75, 2 ), brushMat );
 hole.operation = SUBTRACTION;
@@ -292,9 +290,31 @@ bar2.operation = ADDITION;
 
 const windowGroup = new OperationGroup();
 windowGroup.add( hole, frame, hole2, bar1, bar2 );
-windowGroup.position.x = -2;
-windowGroup.position.z = wallWidth1.position.z;
-root.add( windowGroup );
+
+function windowUpdate(){
+
+    console.log("Window update val ", windowParams.addWindow)
+    console.log("Gui controller update val ", gui.__controllers[7].getValue())
+    console.log(side2.children.includes(windowGroup))
+
+    if (windowParams.addWindow == true){
+      if (side2.children.includes(windowGroup)){}
+      else{
+        side2.add( windowGroup );  
+      }
+    }
+    else{
+      if (side2.children.includes(windowGroup)){
+        delete side2.remove(windowGroup)
+      }
+      else{}
+    }
+
+    side2.position.set(0,0,wallDepth1.geometry.parameters.depth/2)
+    scene.add(side2)
+}
+
+
 
 
 const wallWidth2 = new Operation(wallWidthGeom, brickMaterial)
@@ -330,6 +350,7 @@ function updateColor() {
 // Add a color picker to the GUI
 gui.addColor(colorParams, 'color').name('Colour of Walls').onChange(updateColor);
 
+gui.add(windowParams, 'addWindow').name('Add Window').onChange(windowUpdate)
 
 ///////////////////////Render function//////////////////////////////////////
 //ANIMATE FUNCTION
@@ -380,12 +401,12 @@ function animate(){
 
 	}
 
-	result = csgEvaluator.evaluateHierarchy( root );
+	result = csgEvaluator.evaluateHierarchy( side2 );
 	result.material = resultGridMat;
 	scene.add( result );
 
 	result.visible = params.display !== 'BRUSHES';
-	root.visible = params.display !== 'RESULT';
+	side2.visible = params.display !== 'RESULT';
 
   renderer.render(scene, camera);
 
