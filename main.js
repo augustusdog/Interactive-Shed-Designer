@@ -1,3 +1,4 @@
+//import necessary pacakges. Note, ES6 modules need to be loaded in html and referenced in this js document
 import * as THREE from 'three';
 import { BoxGeometry, WebGPURenderer } from 'three/webgpu';
 import { OrbitControls } from 'OrbitControls';
@@ -5,122 +6,126 @@ import * as dat from 'dat.gui'
 import { depth } from 'three/webgpu';
 import { Evaluator, Operation, OperationGroup, GridMaterial, ADDITION, SUBTRACTION } from 'three-bvh-csg'
 
-const transparentBrushes = false
+//Initialisations
 
-
+//Scene
 const scene = new THREE.Scene();
 
+//Camera
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.setZ(30);
 
+//Renderer
 const renderer = new THREE.WebGLRenderer({
   canvas: document.querySelector('#bg'),
 });
 
 renderer.setPixelRatio( window.devicePixelRatio );
 renderer.setSize(window.innerWidth, window.innerHeight);
-camera.position.setZ(30);
-
 renderer.render(scene, camera);
 
+//Orbit control
 const controls = new OrbitControls(camera, renderer.domElement);
 
-//add grid
+//Grid
 scene.add(new THREE.GridHelper(100,20))
 
-//textures
+//Textures
 const gardenTexture = new THREE.TextureLoader().load('garden.jpg');
-scene.background = gardenTexture;
 const brickTexture = new THREE.TextureLoader().load('brick.jpg');
+const tilesTexture = new THREE.TextureLoader().load("tiles.jpg");
+
+//Materials
 const brickMaterial = new THREE.MeshBasicMaterial({color: 0x000000, map: brickTexture});
-const tilesTexture = new THREE.TextureLoader().load("tiles.jpg")
 const tilesMaterial = new THREE.MeshBasicMaterial({ map: tilesTexture});
-const blackMaterial = new THREE.MeshBasicMaterial({ color: 0x000000});
-const windowMaterial = new THREE.MeshBasicMaterial({color: 0xffffff})
-blackMaterial.side = THREE.DoubleSide;
+const windowMaterial = new THREE.MeshBasicMaterial({color: 0xffffff});
+const brushMat = new THREE.MeshBasicMaterial({color: 0xffc400})
 tilesMaterial.side = THREE.DoubleSide;
+const resultGridMat = brushMat.clone();
 
-const blueMaterial = new THREE.MeshBasicMaterial({color: 0x0000FF})
+//Background
+scene.background = gardenTexture;
 
+//Complex Solid Geometry Variables
 let csgEvaluator;
-let result, side2, brushMat, resultGridMat;
+let result, side2;
 
-// bunny mesh has no UVs so skip that attribute
 csgEvaluator = new Evaluator();
 csgEvaluator.attributes = [ 'position', 'normal' ];
 csgEvaluator.useGroups = false;
 
-brushMat = new GridMaterial();
-brushMat.side = THREE.DoubleSide;
-brushMat.polygonOffset = true;
-brushMat.polygonOffsetFactor = 2;
-brushMat.polygonOffsetUnits = 1;
-brushMat.opacity = 0.15;
-brushMat.transparent = true;
-brushMat.depthWrite = false;
-brushMat.color.set( 0xffc400 );
+//Walls
+let wallWidthGeom = new THREE.BoxGeometry(10, 3, 1)
+let wallDepthGeom = new THREE.BoxGeometry(1, 3, 11)
 
-resultGridMat = brushMat.clone();
-resultGridMat.opacity = 1;
-resultGridMat.transparent = false;
-resultGridMat.depthWrite = true;
-resultGridMat.polygonOffsetFactor = 1;
-resultGridMat.polygonOffsetUnits = 1;
-resultGridMat.color.set( 0xffff00 );
+let wallWidth1 = new Operation(wallWidthGeom, brickMaterial)
+let wallWidth2 = new Operation(wallWidthGeom, brickMaterial)
+let wallDepth1 = new Operation(wallDepthGeom, brickMaterial)
+let wallDepth2 = new Operation(wallDepthGeom, brickMaterial)
 
-///////////////////////initialisation of geometries//////////////////////////////////////
+//Window frame
+const windowParams = {
+  addWindow: false //Default state is window not added
+}
 
-//CREATION OF WALLS
-//width geometries
-const wallWidthGeom = new THREE.BoxGeometry(10, 3, 1)
-const wallWidth1 = new THREE.Mesh(wallWidthGeom, brickMaterial)
-//const wallWidth2 = new THREE.Mesh(wallWidthGeom, brickMaterial)
+let frame = new Operation( new THREE.BoxGeometry( 2, 1.75, wallWidthGeom.depth ), brickMaterial );
+frame.operation = ADDITION;
 
-wallWidth1.position.set(0,0,0)
-//wallWidth2.position.set(0,0,10)
+let hole = new Operation( new THREE.BoxGeometry( 1.9, 1.65, wallWidthGeom.depth ), brickMaterial );
+hole.operation = SUBTRACTION;
 
-//scene.add(wallWidth1, wallWidth2)
+let bar1 = new Operation( new THREE.BoxGeometry( 2, 0.1, 0.1 ), brickMaterial );
+bar1.operation = ADDITION;
 
-//depth geometries
-const wallDepthGeom = new THREE.BoxGeometry(1, 3, 11)
-const wallDepth1 = new THREE.Mesh(wallDepthGeom, brickMaterial)
-const wallDepth2 = new THREE.Mesh(wallDepthGeom, brickMaterial)
+let bar2 = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), brickMaterial );
+bar2.operation = ADDITION;
 
-wallDepth1.position.set(0,0,0)
-wallDepth2.position.set(0,0,0)
+let windowGroup = new OperationGroup();
+windowGroup.add(frame, hole, bar1, bar2 );
 
-//scene.add(wallDepth1, wallDepth2)
+//side2 = new Operation( wallWidthGeom, brickMaterial );
 
-//CREATION OF ROOF
-//for ease of UV mapping decided to build up from two rectangular slopes
+scene.add(wallWidth2, wallDepth1, wallDepth2)
 
-const geometry1 = new THREE.BufferGeometry();
-const geometry2 = new THREE.BufferGeometry();
-const geometry3 = new THREE.BufferGeometry();
+//Roof
 
-const vertices_1 = new Float32Array([
+let geometry1 = new THREE.BufferGeometry();
+let geometry2 = new THREE.BufferGeometry();
+let geometry3 = new THREE.BufferGeometry();
+
   // Slope 1
+const vertices_1 = new Float32Array([
+
   wallWidth1.geometry.parameters.width / 2 + wallDepth1.geometry.parameters.width, wallWidth1.geometry.parameters.height/2, -1*(wallDepth2.geometry.parameters.depth / 2),
   0, wallWidth1.geometry.parameters.height+ 2, -1*(wallDepth2.geometry.parameters.depth / 2),
   wallWidth1.geometry.parameters.width / 2 + wallDepth1.geometry.parameters.width, wallWidth1.geometry.parameters.height/2, wallDepth2.geometry.parameters.depth / 2,
   0, wallWidth1.geometry.parameters.height+ 2, wallDepth2.geometry.parameters.depth / 2,
+
 ]);
+
   //Slope 2
 const vertices_2 = new Float32Array([
+
   -wallWidth1.geometry.parameters.width / 2 - wallDepth1.geometry.parameters.width, wallWidth1.geometry.parameters.height/2, -1*(wallDepth2.geometry.parameters.depth / 2),
   0, wallWidth1.geometry.parameters.height+ 2, -1*(wallDepth2.geometry.parameters.depth / 2),
   -wallWidth1.geometry.parameters.width / 2 - wallDepth1.geometry.parameters.width, wallWidth1.geometry.parameters.height/2, wallDepth2.geometry.parameters.depth / 2,
   0, wallWidth1.geometry.parameters.height+ 2, wallDepth2.geometry.parameters.depth / 2,
+
 ])
-// end bits
+
+// End bits
 const vertices_3 = new Float32Array([
+
   // Front triangle
   -wallWidth1.geometry.parameters.width / 2 - wallDepth1.geometry.parameters.width, wallWidth1.geometry.parameters.height/2, -1*(wallDepth2.geometry.parameters.depth / 2),
   wallWidth1.geometry.parameters.width / 2 + wallDepth1.geometry.parameters.width, wallWidth1.geometry.parameters.height/2, -1*(wallDepth2.geometry.parameters.depth / 2),
   0, wallWidth1.geometry.parameters.height+ 2, -1*(wallDepth2.geometry.parameters.depth / 2),
+  
   // Back triangle
   -wallWidth1.geometry.parameters.width / 2 - wallDepth1.geometry.parameters.width, wallWidth1.geometry.parameters.height/2, wallDepth2.geometry.parameters.depth / 2,
   wallWidth1.geometry.parameters.width / 2 + wallDepth1.geometry.parameters.width, wallWidth1.geometry.parameters.height/2, wallDepth2.geometry.parameters.depth / 2,
   0, wallWidth1.geometry.parameters.height+ 2, wallDepth2.geometry.parameters.depth / 2,
+
 ])
 
 // Indices for drawing order for roof slope 1 and 2
@@ -128,12 +133,10 @@ const indices = [
     0, 1, 2,
     2, 3, 1
 ];
-
 const indices_endBits = [
   0, 1, 2,
   3, 4, 5
 ]
-
 // UV coordinate mapping for roof slope 1 and 2
 const uvs = new Float32Array([
   1, 0,
@@ -160,7 +163,9 @@ const slope1 = new THREE.Mesh(geometry1, tilesMaterial);
 const slope2 = new THREE.Mesh(geometry2, tilesMaterial);
 const endBits = new THREE.Mesh(geometry3, tilesMaterial)
 
-//DYNAMICALLY ADJUST ROOF FUNCTION
+scene.add(slope1, slope2, endBits);
+
+//Functions
 
 function updatePrism() {
   const width = (wallWidth1.scale.x * wallWidth1.geometry.parameters.width + 2*wallDepth1.geometry.parameters.width)/2;
@@ -199,9 +204,33 @@ function updatePrism() {
   geometry3.attributes.position.needsUpdate = true;
   geometry3.computeVertexNormals();
 }
-scene.add(slope1, slope2, endBits);
 
-//ADD WINDOWS
+//function for adding window:
+function windowAddition(){
+  if (result){
+    scene.remove(result)
+  }
+
+  console.log("addWindow state ", windowParams.addWindow)
+  if (windowParams.addWindow == true){
+    wallWidth1.add(windowGroup)
+    result = csgEvaluator.evaluateHierarchy( wallWidth1 );
+    result.material = brickMaterial;
+    result.position.z = wallWidth1.position.z
+    result.position.z = wallWidth1.position.z + 5 //adjust for result's position being relaive to wallWidth1 (as wallWidth1 pressumably parent after CSG eval)
+  }else{
+    wallWidth1.remove(windowGroup)
+    result = wallWidth1
+  }
+
+  result.scale.x = wallWidth1.scale.x
+  result.scale.y = wallWidth1.scale.y
+
+
+	scene.add( result );  
+}
+
+/* //ADD WINDOWS
 const window_x = 3
 const window_z = 0.1
 
@@ -251,35 +280,9 @@ function setWindowLocation(value){
     squareWindow.position.x = - wallWidth1.geometry.parameters.width/2 - wallDepth1.geometry.parameters.width
     squareWindow.position.z = wallWidth1.position.z + (value - (wallWidth1.geometry.parameters.width/2 + wallDepth1.geometry.parameters.depth + wallWidth2.geometry.parameters.width))
   }
-}
+} */
 
-const windowParams = {
-  addWindow: false //Default state is window not added
-}
-
-const frame = new Operation( new THREE.BoxGeometry( 2, 1.75, wallWidth1.geometry.parameters.depth ), brushMat );
-frame.operation = ADDITION;
-
-const hole = new Operation( new THREE.BoxGeometry( 1.9, 1.65, wallWidth1.geometry.parameters.depth ), brushMat );
-hole.operation = SUBTRACTION;
-
-const bar1 = new Operation( new THREE.BoxGeometry( 2, 0.1, 0.1 ), brushMat );
-bar1.operation = ADDITION;
-
-const bar2 = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), brushMat );
-bar2.operation = ADDITION;
-
-const windowGroup = new OperationGroup();
-windowGroup.add(frame, hole, bar1, bar2 );
-
-side2 = new Operation( new BoxGeometry(wallWidth1.geometry.parameters.width, wallWidth1.geometry.parameters.height, wallWidth1.geometry.parameters.depth), brushMat );
-side2.add( windowGroup )
-
-const wallWidth2 = new Operation(wallWidthGeom, brickMaterial)
-
-///////////////////////User interface//////////////////////////////////////
-
-//CREATION OF USER INTERFACE
+//User interface
 
 const gui = new dat.GUI()
 
@@ -288,7 +291,7 @@ let interimVariable = 0
 gui.add(wallWidth1.scale, "x", 0.5, 2).name('Scale Shed Width')
 gui.add(wallWidth1.scale, "y", 0.5, 2).name('Scale Shed Height')
 gui.add(wallDepth1.scale, "z", 0.5, 2).name('Scale Shed Depth')
-gui.add({InterimVar: interimVariable}, "InterimVar", 0, (2*wallWidth1.geometry.parameters.width + 2*wallDepth1.geometry.parameters.depth - 4*wallWidth1.geometry.parameters.depth),0.1).name('Window Location').onChange(setWindowLocation)
+//gui.add({InterimVar: interimVariable}, "InterimVar", 0, (2*wallWidth1.geometry.parameters.width + 2*wallDepth1.geometry.parameters.depth - 4*wallWidth1.geometry.parameters.depth),0.1).name('Window Location').onChange(setWindowLocation)
 
 const colorParams = {
   color: '#000000' // Hex string for white, initial color
@@ -317,6 +320,7 @@ function animate(){
   controls.update();
   
   //scaling width
+  wallWidth2.scale.x = wallWidth1.scale.x
   wallDepth1.position.x = (wallWidth1.geometry.parameters.width / 2) * wallWidth1.scale.x + wallDepth1.geometry.parameters.width / 2
   wallDepth2.position.x = - wallDepth1.position.x
   wallDepth1.position.z = wallDepth2.position.z = (wallWidth2.position.z / 2) //+ wallWidth1.geometry.parameters.depth/2
@@ -331,31 +335,10 @@ function animate(){
   wallWidth1.position.z = - 1 * ((wallDepth1.geometry.parameters.depth / 2) * wallDepth1.scale.z) + wallWidth1.geometry.parameters.depth / 2
   wallWidth2.position.z = (wallDepth1.geometry.parameters.depth / 2) * wallDepth1.scale.z - wallWidth2.geometry.parameters.depth / 2
 
-  //scaling roof
-  updatePrism()
 
-	// if ( result ) {
+  updatePrism() //load function which updates apex roof
 
-	// 	result.geometry.dispose();
-	// 	result.parent.remove( result );
-
-	// }
-  if (result){
-    scene.remove(result)
-  }
-
-  console.log("addWindow state ", windowParams.addWindow)
-  if (windowParams.addWindow == true){
-    side2.add(windowGroup)
-    result = csgEvaluator.evaluateHierarchy( side2 );
-    result.material = resultGridMat;
-  }else{
-    result = wallWidth1
-  }
-
-  result.position.set(wallWidth1.position.x, wallWidth1.position.y, wallWidth1.position.z)
-  result.scale.x = wallWidth1.scale.x
-	scene.add( result );  
+  windowAddition() //load window addition function
 
   renderer.render(scene, camera);
 
