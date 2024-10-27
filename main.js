@@ -46,8 +46,10 @@ const windowMaterial = new THREE.MeshBasicMaterial({color: 0xffffff})
 blackMaterial.side = THREE.DoubleSide;
 tilesMaterial.side = THREE.DoubleSide;
 
+const blueMaterial = new THREE.MeshBasicMaterial({color: 0x0000FF})
+
 let csgEvaluator;
-let result, side2, brushMat, resultGridMat, wireframeObject;
+let result, side2, brushMat, resultGridMat;
 
 // bunny mesh has no UVs so skip that attribute
 csgEvaluator = new Evaluator();
@@ -260,26 +262,47 @@ function setWindowLocation(value){
 
 //Convert to csg objects
 
+let side2_clone
+
 side2 = new Operation( wallWidthGeom, brushMat );
+side2_clone = new Operation( wallWidthGeom, brushMat );
 
 side2.position.set(0,0,wallDepth1.geometry.parameters.depth/2)
+side2_clone.position.set(0,0,wallDepth1.geometry.parameters.depth/2)
 
 scene.add( side2 );
 
-side2.material.transparent = true;
-side2.material.opacity = 0.2;
 
 const windowParams = {
   addWindow: false //Default state is window not added
 }
 
-const hole = new Operation( new THREE.BoxGeometry( 2, 1.75, 2 ), brushMat );
+// const hole = new Operation( new THREE.BoxGeometry( 2, 1.75, 2 ), brushMat );
+// hole.operation = SUBTRACTION;
+
+// const frame = new Operation( new THREE.BoxGeometry( 2, 1.75, 0.2 ), brushMat );
+// frame.operation = ADDITION;
+
+// const hole2 = new Operation( new THREE.BoxGeometry( 1.9, 1.65, 2 ), brushMat );
+// hole2.operation = SUBTRACTION;
+
+// const bar1 = new Operation( new THREE.BoxGeometry( 2, 0.1, 0.1 ), brushMat );
+// bar1.operation = ADDITION;
+
+// const bar2 = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), brushMat );
+// bar2.operation = ADDITION;
+
+// const windowGroup = new OperationGroup();
+// windowGroup.add( hole, frame, hole2, bar1, bar2 );
+// side2.add( windowGroup );
+
+const hole = new Operation( new THREE.BoxGeometry( 2, 1.75, wallWidth1.geometry.parameters.depth ), brushMat );
 hole.operation = SUBTRACTION;
 
-const frame = new Operation( new THREE.BoxGeometry( 2, 1.75, 0.2 ), brushMat );
+const frame = new Operation( new THREE.BoxGeometry( 2, 1.75, wallWidth1.geometry.parameters.depth ), brushMat );
 frame.operation = ADDITION;
 
-const hole2 = new Operation( new THREE.BoxGeometry( 1.9, 1.65, 2 ), brushMat );
+const hole2 = new Operation( new THREE.BoxGeometry( 1.9, 1.65, wallWidth1.geometry.parameters.depth ), brushMat );
 hole2.operation = SUBTRACTION;
 
 const bar1 = new Operation( new THREE.BoxGeometry( 2, 0.1, 0.1 ), brushMat );
@@ -288,28 +311,27 @@ bar1.operation = ADDITION;
 const bar2 = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), brushMat );
 bar2.operation = ADDITION;
 
-const inv_hole = hole
-inv_hole.operation = ADDITION
+// const inv_hole = hole
+// inv_hole.operation = ADDITION
 
-const inv_frame = frame
-inv_frame.operation = SUBTRACTION
+// const inv_frame = frame
+// //inv_frame.operation = SUBTRACTION
 
-const inv_hole2 = hole2
-inv_hole2.operation = ADDITION
+// const inv_hole2 = hole2;
+// //inv_hole2.operation = ADDITION;
 
-const inv_bar1 = bar1
-inv_bar1.operation = SUBTRACTION
+// // const inv_bar1 = bar1
+// // inv_bar1.operation = SUBTRACTION
 
-const inv_bar2 = bar2
-inv_bar2.operation = SUBTRACTION
+// // const inv_bar2 = bar2
+// // inv_bar2.operation = SUBTRACTION
 
-const invWindowGroup = new OperationGroup()
-invWindowGroup.add(inv_hole, inv_frame, inv_hole2, inv_bar1, inv_bar2)
+// // const invWindowGroup = new OperationGroup()
+// // invWindowGroup.add(inv_hole, inv_frame, inv_hole2, inv_bar1, inv_bar2)
 
 const windowGroup = new OperationGroup();
 windowGroup.add( hole, frame, hole2, bar1, bar2 );
-
-const interimSide2 = side2;
+side2.add(windowGroup)
 
 function windowUpdate(){
 
@@ -320,19 +342,18 @@ function windowUpdate(){
     if (windowParams.addWindow == true){
       if (side2.children.includes(windowGroup)){}
       else{
-        side2.add( windowGroup );
+        side2.add( windowGroup ); //with transparentBrush on does exactly what we want!
+        renderer.render(scene, camera)
       }
     }
     else{
       if (side2.children.includes(windowGroup)){
-        delete side2.remove(windowGroup)
-        side2.add(invWindowGroup)
+        side2.remove( windowGroup );
+        side2 = side2_clone
+        renderer.render(scene, camera)
       }
       else{}
     }
-
-    side2.position.set(0,0,wallDepth1.geometry.parameters.depth/2)
-    scene.add(side2)
 }
 
 
@@ -424,10 +445,10 @@ function animate(){
 
 	result = csgEvaluator.evaluateHierarchy( side2 );
 	result.material = resultGridMat;
-	scene.add( result );
+	scene.add( result );  
 
-	result.visible = params.display !== 'BRUSHES';
-	side2.visible = params.display !== 'RESULT';
+	// result.visible = params.display !== 'BRUSHES';
+	// side2.visible = params.display !== 'RESULT';
 
   renderer.render(scene, camera);
 
