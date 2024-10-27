@@ -1,19 +1,12 @@
 import * as THREE from 'three';
-import { WebGPURenderer } from 'three/webgpu';
+import { BoxGeometry, WebGPURenderer } from 'three/webgpu';
 import { OrbitControls } from 'OrbitControls';
 import * as dat from 'dat.gui'
 import { depth } from 'three/webgpu';
 import { Evaluator, Operation, OperationGroup, GridMaterial, ADDITION, SUBTRACTION } from 'three-bvh-csg'
 
-const params = {
+const transparentBrushes = false
 
-	snap: true,
-	wireframe: false,
-	displayControls: true,
-	transparentBrushes: false,
-	display: 'OVERLAY',
-
-};
 
 const scene = new THREE.Scene();
 
@@ -260,50 +253,15 @@ function setWindowLocation(value){
   }
 }
 
-//Convert to csg objects
-
-let side2_clone
-
-side2 = new Operation( wallWidthGeom, brushMat );
-side2_clone = new Operation( wallWidthGeom, brushMat );
-
-side2.position.set(0,0,wallDepth1.geometry.parameters.depth/2)
-side2_clone.position.set(0,0,wallDepth1.geometry.parameters.depth/2)
-
-scene.add( side2 );
-
-
 const windowParams = {
   addWindow: false //Default state is window not added
 }
 
-// const hole = new Operation( new THREE.BoxGeometry( 2, 1.75, 2 ), brushMat );
-// hole.operation = SUBTRACTION;
-
-// const frame = new Operation( new THREE.BoxGeometry( 2, 1.75, 0.2 ), brushMat );
-// frame.operation = ADDITION;
-
-// const hole2 = new Operation( new THREE.BoxGeometry( 1.9, 1.65, 2 ), brushMat );
-// hole2.operation = SUBTRACTION;
-
-// const bar1 = new Operation( new THREE.BoxGeometry( 2, 0.1, 0.1 ), brushMat );
-// bar1.operation = ADDITION;
-
-// const bar2 = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), brushMat );
-// bar2.operation = ADDITION;
-
-// const windowGroup = new OperationGroup();
-// windowGroup.add( hole, frame, hole2, bar1, bar2 );
-// side2.add( windowGroup );
-
-const hole = new Operation( new THREE.BoxGeometry( 2, 1.75, wallWidth1.geometry.parameters.depth ), brushMat );
-hole.operation = SUBTRACTION;
-
 const frame = new Operation( new THREE.BoxGeometry( 2, 1.75, wallWidth1.geometry.parameters.depth ), brushMat );
 frame.operation = ADDITION;
 
-const hole2 = new Operation( new THREE.BoxGeometry( 1.9, 1.65, wallWidth1.geometry.parameters.depth ), brushMat );
-hole2.operation = SUBTRACTION;
+const hole = new Operation( new THREE.BoxGeometry( 1.9, 1.65, wallWidth1.geometry.parameters.depth ), brushMat );
+hole.operation = SUBTRACTION;
 
 const bar1 = new Operation( new THREE.BoxGeometry( 2, 0.1, 0.1 ), brushMat );
 bar1.operation = ADDITION;
@@ -312,52 +270,12 @@ const bar2 = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), brushMat );
 bar2.operation = ADDITION;
 
 const windowGroup = new OperationGroup();
-windowGroup.add( hole, frame, hole2, bar1, bar2 );
-side2.add(windowGroup)
+windowGroup.add(frame, hole, bar1, bar2 );
 
-function windowUpdate(){
-
-    windowGroup.add( hole, frame, hole2, bar1, bar2 );
-    side2.add(windowGroup)
-
-    console.log("Window update val ", windowParams.addWindow)
-    console.log("Gui controller update val ", gui.__controllers[6].getValue())
-    console.log(side2.children.includes(windowGroup))
-
-    if (windowParams.addWindow == true){
-      if (side2.children.includes( windowGroup )){
-
-        console.log("includes window group")
-        params.transparentBrushes = true
-
-      }
-      else{
-        params.transparentBrushes = true
-        //side2.add( windowGroup ); //with transparentBrush on does exactly what we want!
-        //renderer.render(scene, camera)
-      }
-    }
-    else{
-      if (side2.children.includes(windowGroup)){
-        params.transparentBrushes = false
-        //side2.remove( windowGroup );
-        //side2 = side2_clone
-        //renderer.render(scene, camera)
-      }
-      else{
-        
-        console.log("doesn't include window group and doesn't need it")
-        params.transparentBrushes = false
-      
-        }
-    }
-}
-
-
-
+side2 = new Operation( new BoxGeometry(wallWidth1.geometry.parameters.width, wallWidth1.geometry.parameters.height, wallWidth1.geometry.parameters.depth), brushMat );
+side2.add( windowGroup )
 
 const wallWidth2 = new Operation(wallWidthGeom, brickMaterial)
-
 
 ///////////////////////User interface//////////////////////////////////////
 
@@ -371,9 +289,6 @@ gui.add(wallWidth1.scale, "x", 0.5, 2).name('Scale Shed Width')
 gui.add(wallWidth1.scale, "y", 0.5, 2).name('Scale Shed Height')
 gui.add(wallDepth1.scale, "z", 0.5, 2).name('Scale Shed Depth')
 gui.add({InterimVar: interimVariable}, "InterimVar", 0, (2*wallWidth1.geometry.parameters.width + 2*wallDepth1.geometry.parameters.depth - 4*wallWidth1.geometry.parameters.depth),0.1).name('Window Location').onChange(setWindowLocation)
-
-//gui.add( params, 'transparentBrushes' );
-gui.add( params, 'display', [ 'OVERLAY', 'BRUSHES', 'RESULT' ] );
 
 const colorParams = {
   color: '#000000' // Hex string for white, initial color
@@ -389,7 +304,7 @@ function updateColor() {
 // Add a color picker to the GUI
 gui.addColor(colorParams, 'color').name('Colour of Walls').onChange(updateColor);
 
-gui.add(windowParams, 'addWindow').name('Add Window').onChange(windowUpdate)
+gui.add(windowParams, 'addWindow').name('Add Window')
 
 ///////////////////////Render function//////////////////////////////////////
 //ANIMATE FUNCTION
@@ -402,7 +317,6 @@ function animate(){
   controls.update();
   
   //scaling width
-  windowUpdate
   wallDepth1.position.x = (wallWidth1.geometry.parameters.width / 2) * wallWidth1.scale.x + wallDepth1.geometry.parameters.width / 2
   wallDepth2.position.x = - wallDepth1.position.x
   wallDepth1.position.z = wallDepth2.position.z = (wallWidth2.position.z / 2) //+ wallWidth1.geometry.parameters.depth/2
@@ -420,35 +334,28 @@ function animate(){
   //scaling roof
   updatePrism()
 
-  if ( params.transparentBrushes ) {
+	// if ( result ) {
 
-		brushMat.depthWrite = false;
-		brushMat.transparent = true;
-		brushMat.opacity = 0.15;
+	// 	result.geometry.dispose();
+	// 	result.parent.remove( result );
 
-	} else {
+	// }
+  if (result){
+    scene.remove(result)
+  }
 
-		brushMat.depthWrite = true;
-		brushMat.transparent = false;
-		brushMat.opacity = 1;
+  console.log("addWindow state ", windowParams.addWindow)
+  if (windowParams.addWindow == true){
+    side2.add(windowGroup)
+    result = csgEvaluator.evaluateHierarchy( side2 );
+    result.material = resultGridMat;
+  }else{
+    result = wallWidth1
+  }
 
-	}
-
-	if ( result ) {
-
-		result.geometry.dispose();
-		result.parent.remove( result );
-
-	}
-
-	result = csgEvaluator.evaluateHierarchy( side2 );
-	result.material = resultGridMat;
-  result.scale.x = side2.scale.x = wallWidth1.scale.x
-  
+  result.position.set(wallWidth1.position.x, wallWidth1.position.y, wallWidth1.position.z)
+  result.scale.x = wallWidth1.scale.x
 	scene.add( result );  
-
-	// result.visible = params.display !== 'BRUSHES';
-	// side2.visible = params.display !== 'RESULT';
 
   renderer.render(scene, camera);
 
