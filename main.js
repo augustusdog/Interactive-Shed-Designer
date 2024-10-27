@@ -10,7 +10,7 @@ const params = {
 	snap: true,
 	wireframe: false,
 	displayControls: true,
-	transparentBrushes: true,
+	transparentBrushes: false,
 	display: 'OVERLAY',
 
 };
@@ -311,48 +311,45 @@ bar1.operation = ADDITION;
 const bar2 = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), brushMat );
 bar2.operation = ADDITION;
 
-// const inv_hole = hole
-// inv_hole.operation = ADDITION
-
-// const inv_frame = frame
-// //inv_frame.operation = SUBTRACTION
-
-// const inv_hole2 = hole2;
-// //inv_hole2.operation = ADDITION;
-
-// // const inv_bar1 = bar1
-// // inv_bar1.operation = SUBTRACTION
-
-// // const inv_bar2 = bar2
-// // inv_bar2.operation = SUBTRACTION
-
-// // const invWindowGroup = new OperationGroup()
-// // invWindowGroup.add(inv_hole, inv_frame, inv_hole2, inv_bar1, inv_bar2)
-
 const windowGroup = new OperationGroup();
 windowGroup.add( hole, frame, hole2, bar1, bar2 );
 side2.add(windowGroup)
 
 function windowUpdate(){
 
+    windowGroup.add( hole, frame, hole2, bar1, bar2 );
+    side2.add(windowGroup)
+
     console.log("Window update val ", windowParams.addWindow)
-    console.log("Gui controller update val ", gui.__controllers[7].getValue())
+    console.log("Gui controller update val ", gui.__controllers[6].getValue())
     console.log(side2.children.includes(windowGroup))
 
     if (windowParams.addWindow == true){
-      if (side2.children.includes(windowGroup)){}
+      if (side2.children.includes( windowGroup )){
+
+        console.log("includes window group")
+        params.transparentBrushes = true
+
+      }
       else{
-        side2.add( windowGroup ); //with transparentBrush on does exactly what we want!
-        renderer.render(scene, camera)
+        params.transparentBrushes = true
+        //side2.add( windowGroup ); //with transparentBrush on does exactly what we want!
+        //renderer.render(scene, camera)
       }
     }
     else{
       if (side2.children.includes(windowGroup)){
-        side2.remove( windowGroup );
-        side2 = side2_clone
-        renderer.render(scene, camera)
+        params.transparentBrushes = false
+        //side2.remove( windowGroup );
+        //side2 = side2_clone
+        //renderer.render(scene, camera)
       }
-      else{}
+      else{
+        
+        console.log("doesn't include window group and doesn't need it")
+        params.transparentBrushes = false
+      
+        }
     }
 }
 
@@ -375,7 +372,7 @@ gui.add(wallWidth1.scale, "y", 0.5, 2).name('Scale Shed Height')
 gui.add(wallDepth1.scale, "z", 0.5, 2).name('Scale Shed Depth')
 gui.add({InterimVar: interimVariable}, "InterimVar", 0, (2*wallWidth1.geometry.parameters.width + 2*wallDepth1.geometry.parameters.depth - 4*wallWidth1.geometry.parameters.depth),0.1).name('Window Location').onChange(setWindowLocation)
 
-gui.add( params, 'transparentBrushes' );
+//gui.add( params, 'transparentBrushes' );
 gui.add( params, 'display', [ 'OVERLAY', 'BRUSHES', 'RESULT' ] );
 
 const colorParams = {
@@ -405,10 +402,11 @@ function animate(){
   controls.update();
   
   //scaling width
-  wallWidth2.scale.x = wallWidth1.scale.x;
+  windowUpdate
   wallDepth1.position.x = (wallWidth1.geometry.parameters.width / 2) * wallWidth1.scale.x + wallDepth1.geometry.parameters.width / 2
   wallDepth2.position.x = - wallDepth1.position.x
   wallDepth1.position.z = wallDepth2.position.z = (wallWidth2.position.z / 2) //+ wallWidth1.geometry.parameters.depth/2
+  
 
   //scaling height
   wallWidth2.scale.y = wallDepth1.scale.y = wallDepth2.scale.y = wallWidth1.scale.y;
@@ -445,6 +443,8 @@ function animate(){
 
 	result = csgEvaluator.evaluateHierarchy( side2 );
 	result.material = resultGridMat;
+  result.scale.x = side2.scale.x = wallWidth1.scale.x
+  
 	scene.add( result );  
 
 	// result.visible = params.display !== 'BRUSHES';
