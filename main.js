@@ -68,20 +68,38 @@ const windowParams = {
   addWindow: false //Default state is window not added
 }
 
-let frame = new Operation( new THREE.BoxGeometry( 2, 1.75, wallWidthGeom.depth ), brickMaterial );
-frame.operation = ADDITION;
+//in x plane
 
-let hole = new Operation( new THREE.BoxGeometry( 1.9, 1.65, wallWidthGeom.depth ), brickMaterial );
-hole.operation = SUBTRACTION;
+let frame_x = new Operation( new THREE.BoxGeometry( 2, 1.75, wallWidthGeom.depth ), brickMaterial );
+frame_x.operation = ADDITION;
 
-let bar1 = new Operation( new THREE.BoxGeometry( 2, 0.1, 0.1 ), brickMaterial );
-bar1.operation = ADDITION;
+let hole_x = new Operation( new THREE.BoxGeometry( 1.9, 1.65, wallWidthGeom.depth ), brickMaterial );
+hole_x.operation = SUBTRACTION;
 
-let bar2 = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), brickMaterial );
-bar2.operation = ADDITION;
+let bar1_x = new Operation( new THREE.BoxGeometry( 2, 0.1, 0.1 ), brickMaterial );
+bar1_x.operation = ADDITION;
 
-let windowGroup = new OperationGroup();
-windowGroup.add(frame, hole, bar1, bar2 );
+let bar2_x = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), brickMaterial );
+bar2_x.operation = ADDITION;
+
+let windowGroup_x = new OperationGroup();
+windowGroup_x.add(frame_x, hole_x, bar1_x, bar2_x );
+
+//in z plane
+let frame_z = new Operation( new THREE.BoxGeometry( 2, 1.75, wallWidthGeom.depth ), brickMaterial );
+frame_z.operation = ADDITION;
+
+let hole_z = new Operation( new THREE.BoxGeometry( 1.9, 1.65, wallWidthGeom.depth ), brickMaterial );
+hole_z.operation = SUBTRACTION;
+
+let bar1_z = new Operation( new THREE.BoxGeometry( 2, 0.1, 0.1 ), brickMaterial );
+bar1_z.operation = ADDITION;
+
+let bar2_z = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), brickMaterial );
+bar2_z.operation = ADDITION;
+
+let windowGroup_z = new OperationGroup();
+windowGroup_z.add(frame_z, hole_z, bar1_z, bar2_z );
 
 //side2 = new Operation( wallWidthGeom, brickMaterial );
 
@@ -213,13 +231,15 @@ function windowAddition(){
 
   console.log("addWindow state ", windowParams.addWindow)
   if (windowParams.addWindow == true){
-    wallWidth1.add(windowGroup)
+    wallWidth1.add(windowGroup_x)
     result = csgEvaluator.evaluateHierarchy( wallWidth1 );
     result.material = brickMaterial;
     result.position.z = wallWidth1.position.z
     result.position.z = wallWidth1.position.z + 5 //adjust for result's position being relaive to wallWidth1 (as wallWidth1 pressumably parent after CSG eval)
+  
+  
   }else{
-    wallWidth1.remove(windowGroup)
+    wallWidth1.remove(windowGroup_x)
     result = wallWidth1
   }
 
@@ -230,7 +250,7 @@ function windowAddition(){
 	scene.add( result );  
 }
 
-/* //ADD WINDOWS
+//ADD WINDOWS
 const window_x = 3
 const window_z = 0.1
 
@@ -245,16 +265,13 @@ squareWindow.position.set(0,0, wallDepth1.geometry.parameters.depth/2)
 
 function setWindowLocation(value){
 
-  if (value <= wallWidth1.geometry.parameters.width/2 - squareWindow.geometry.parameters.width/2){ //prevents half window being out of shed
+  if (value <= wallWidth1.geometry.parameters.width/2 - hole.geometry.parameters.width/2){ //prevents half window being out of shed
 
     squareWindow.scale.x = 1
     squareWindow.scale.z = 1
 
     squareWindow.position.x = value
     squareWindow.position.z = wallWidth2.position.z + wallWidth2.geometry.parameters.depth/2
-
-    console.log("x size ", squareWindow.geometry.parameters.width)
-    console.log("z size ", squareWindow.geometry.parameters.depth)
 
   } else if (value > wallWidth1.geometry.parameters.width/2 - squareWindow.geometry.parameters.width/2 && value <= ((wallWidth1.geometry.parameters.width/2 - window_x/2) + (wallDepth1.geometry.parameters.depth - 2*wallWidth1.geometry.parameters.depth - window_x))) {
 
@@ -280,7 +297,7 @@ function setWindowLocation(value){
     squareWindow.position.x = - wallWidth1.geometry.parameters.width/2 - wallDepth1.geometry.parameters.width
     squareWindow.position.z = wallWidth1.position.z + (value - (wallWidth1.geometry.parameters.width/2 + wallDepth1.geometry.parameters.depth + wallWidth2.geometry.parameters.width))
   }
-} */
+}
 
 //User interface
 
@@ -308,6 +325,8 @@ function updateColor() {
 gui.addColor(colorParams, 'color').name('Colour of Walls').onChange(updateColor);
 
 gui.add(windowParams, 'addWindow').name('Add Window')
+
+gui.add(windowGroup_x.position, "x", -wallWidth1.geometry.parameters.width/2, wallWidth1.geometry.parameters.width/2).name("Window 1 Position")
 
 ///////////////////////Render function//////////////////////////////////////
 //ANIMATE FUNCTION
