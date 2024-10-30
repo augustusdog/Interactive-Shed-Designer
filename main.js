@@ -48,7 +48,7 @@ scene.background = gardenTexture;
 
 //Complex Solid Geometry Variables
 let csgEvaluator;
-let result, side2;
+let result
 
 csgEvaluator = new Evaluator();
 csgEvaluator.attributes = [ 'position', 'normal' ];
@@ -65,34 +65,56 @@ let wallDepth2 = new Operation(wallDepthGeom, brickMaterial)
 
 //Window frame
 const windowParams = {
-  addWindow: false //Default state is window not added
+  addWindow1: false, //Default state is window not added
+  addWindow2: false,
+  addWindow3: false
 }
 
 //in x plane
 
-let frame_x = new Operation( new THREE.BoxGeometry( 2, 1.75, wallWidthGeom.depth ), brickMaterial );
+let frame_x = new Operation( new THREE.BoxGeometry( 2, 1.75, wallWidthGeom.depth), brickMaterial );
 frame_x.operation = ADDITION;
 
-let hole_x = new Operation( new THREE.BoxGeometry( 1.9, 1.65, wallWidthGeom.depth ), brickMaterial );
+let hole_x = new Operation( new THREE.BoxGeometry( 1.9, 1.65, wallWidthGeom.depth), brickMaterial );
 hole_x.operation = SUBTRACTION;
 
-let bar1_x = new Operation( new THREE.BoxGeometry( 2, 0.1, 0.1 ), brickMaterial );
+let bar1_x = new Operation( new THREE.BoxGeometry( 2, 0.1, 0.1 ), brickMaterial);
 bar1_x.operation = ADDITION;
 
-let bar2_x = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), brickMaterial );
+let bar2_x = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), brickMaterial);
 bar2_x.operation = ADDITION;
 
 let windowGroup_x = new OperationGroup();
 windowGroup_x.add(frame_x, hole_x, bar1_x, bar2_x );
 
+let frame_2x = new Operation( new THREE.BoxGeometry( 2, 1.75, wallWidthGeom.depth), brickMaterial );
+frame_2x.operation = ADDITION;
+
+let hole_2x = new Operation( new THREE.BoxGeometry( 1.9, 1.65, wallWidthGeom.depth), brickMaterial );
+hole_2x.operation = SUBTRACTION;
+
+let bar1_2x = new Operation( new THREE.BoxGeometry( 2, 0.1, 0.1 ), brickMaterial );
+bar1_2x.operation = ADDITION;
+
+let bar2_2x = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), brickMaterial );
+bar2_2x.operation = ADDITION;
+
+let windowGroup_2x = new OperationGroup();
+windowGroup_2x.add(frame_2x, hole_2x, bar1_2x, bar2_2x );
+
+windowGroup_x.position.x = 0
+windowGroup_2x.position.x = 3
+
+
+
 //in z plane
-let frame_z = new Operation( new THREE.BoxGeometry( 2, 1.75, wallWidthGeom.depth ), brickMaterial );
+let frame_z = new Operation( new THREE.BoxGeometry( wallWidthGeom.depth , 1.75, 2 ), brickMaterial );
 frame_z.operation = ADDITION;
 
-let hole_z = new Operation( new THREE.BoxGeometry( 1.9, 1.65, wallWidthGeom.depth ), brickMaterial );
+let hole_z = new Operation( new THREE.BoxGeometry( wallWidthGeom.depth, 1.65, 1.9 ), brickMaterial );
 hole_z.operation = SUBTRACTION;
 
-let bar1_z = new Operation( new THREE.BoxGeometry( 2, 0.1, 0.1 ), brickMaterial );
+let bar1_z = new Operation( new THREE.BoxGeometry( 0.1, 0.1, 2 ), brickMaterial );
 bar1_z.operation = ADDITION;
 
 let bar2_z = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), brickMaterial );
@@ -103,7 +125,7 @@ windowGroup_z.add(frame_z, hole_z, bar1_z, bar2_z );
 
 //side2 = new Operation( wallWidthGeom, brickMaterial );
 
-scene.add(wallWidth2, wallDepth1, wallDepth2)
+scene.add(wallWidth2, wallDepth2)
 
 //Roof
 
@@ -223,21 +245,38 @@ function updatePrism() {
   geometry3.computeVertexNormals();
 }
 
+
 //function for adding window:
 function windowAddition(){
   if (result){
     scene.remove(result)
   }
 
-  console.log("addWindow state ", windowParams.addWindow)
-  if (windowParams.addWindow == true){
+  console.log("addWindow state ", windowParams.addWindow1)
+  if (windowParams.addWindow1 == true){
+
+    console.log("WallWidth1 object type ", wallWidth1.constructor.name)
+
     wallWidth1.add(windowGroup_x)
-    result = csgEvaluator.evaluateHierarchy( wallWidth1 );
+    //wallWidth1.add(windowGroup_2x)
+
+    //windowGroup_2x.position.z = wallWidth1.position.z + 5
+
+    result = csgEvaluator.evaluateHierarchy(wallWidth1)
+    //result = new Operation(interim_result.geometry, brickMaterial)
+
+
+
+
+    console.log("Result object type ", result.constructor.name)
+    console.log("geometry ", result.geometry)
+
     result.material = brickMaterial;
     result.position.z = wallWidth1.position.z
     result.position.z = wallWidth1.position.z + 5 //adjust for result's position being relaive to wallWidth1 (as wallWidth1 pressumably parent after CSG eval)
-  
-  
+    //wallWidth1.add(windowGroup_2x)
+    console.log("first z", windowGroup_x.position.z)
+    console.log("second z", windowGroup_2x.position.z)
   }else{
     wallWidth1.remove(windowGroup_x)
     result = wallWidth1
@@ -246,8 +285,17 @@ function windowAddition(){
   result.scale.x = wallWidth1.scale.x
   result.scale.y = wallWidth1.scale.y
 
+	scene.add( result );
 
-	scene.add( result );  
+  if (windowParams.addWindow3 == true){
+    wallDepth1.add(windowGroup_z)
+    
+    let resultDepth = csgEvaluator.evaluateHierarchy(wallDepth1)
+
+    resultDepth.material = brickMaterial
+
+    scene.add(resultDepth)
+  }
 }
 
 //ADD WINDOWS
@@ -303,8 +351,6 @@ function setWindowLocation(value){
 
 const gui = new dat.GUI()
 
-let interimVariable = 0
-
 gui.add(wallWidth1.scale, "x", 0.5, 2).name('Scale Shed Width')
 gui.add(wallWidth1.scale, "y", 0.5, 2).name('Scale Shed Height')
 gui.add(wallDepth1.scale, "z", 0.5, 2).name('Scale Shed Depth')
@@ -324,10 +370,12 @@ function updateColor() {
 // Add a color picker to the GUI
 gui.addColor(colorParams, 'color').name('Colour of Walls').onChange(updateColor);
 
-gui.add(windowParams, 'addWindow').name('Add Window')
+gui.add(windowParams, 'addWindow1').name('Add Window 1')
+gui.add(windowParams, 'addWindow2').name('Add Window 2')
+gui.add(windowParams, "addWindow3").name('Add Window 3')
 
-gui.add(windowGroup_x.position, "x", -wallWidth1.geometry.parameters.width/2, wallWidth1.geometry.parameters.width/2).name("Window 1 Position")
-
+gui.add(windowGroup_x.position, "x", -wallWidth1.geometry.parameters.width/2 + hole_x.geometry.parameters.width/2, wallWidth1.geometry.parameters.width/2 - hole_x.geometry.parameters.width/2).name("Window 1 Position")
+gui.add(windowGroup_2x.position, "x", -wallWidth1.geometry.parameters.width/2 + hole_x.geometry.parameters.width/2, wallWidth1.geometry.parameters.width/2 - hole_x.geometry.parameters.width/2).name("Window 2 Position")
 ///////////////////////Render function//////////////////////////////////////
 //ANIMATE FUNCTION
 //////////////////
