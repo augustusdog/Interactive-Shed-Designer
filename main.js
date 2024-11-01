@@ -26,7 +26,8 @@ renderer.render(scene, camera);
 
 //Orbit control
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.maxPolarAngle = Math.PI / 2
+//controls.maxPolarAngle = Math.PI / 2
+controls.maxDistance = 35; //set max zoom out level
 
 //Grid
 //scene.add(new THREE.GridHelper(100,20))
@@ -49,9 +50,35 @@ const resultGridMat = brushMat.clone();
 //Background
 scene.background = gardenTexture;
 
-const floor = new THREE.Mesh(new THREE.BoxGeometry(1000,100,1000), floorMaterial)
+const floor2_geom = new THREE.BufferGeometry()
+const vertices_floor = new Float32Array([
+  -10, -5, 10,
+  10, -5, - 10,
+  -10, -5, -10,
+  10, -5, 10])
 
-scene.add(floor)
+const indices_floor = [
+  0, 3, 1,
+  1, 2, 0
+]
+
+const floor_uvs = new Float32Array([
+  1, 0,
+  0, 1,
+  0, 0,
+  1, 1
+])
+
+floor2_geom.setAttribute('uv', new THREE.BufferAttribute(floor_uvs, 2))
+floor2_geom.setAttribute('position', new THREE.BufferAttribute(vertices_floor, 3));
+floor2_geom.setIndex(indices_floor);
+floor2_geom.computeVertexNormals();
+
+const floor_v2 = new THREE.Mesh(floor2_geom, floorMaterial)
+
+const floor = new THREE.Mesh(new THREE.BoxGeometry(1000,0,1000), floorMaterial)
+
+scene.add(floor_v2)
 
 //Complex Solid Geometry Variables
 let csgEvaluator;
@@ -149,6 +176,8 @@ windowGroup_2z.add(frame_2z, hole_2z, bar1_2z, bar2_2z );
 //side2 = new Operation( wallWidthGeom, brickMaterial );
 
 wallWidth2.add(hole_door)
+
+hole_door.position.y = -0.5
 
 const door_side = csgEvaluator.evaluateHierarchy(wallWidth2)
 
@@ -362,7 +391,7 @@ function windowAddition(){
 const gui = new dat.GUI()
 
 gui.add(wallWidth1.scale, "x", 0.5, 2).name('Scale Shed Width')
-gui.add(wallWidth1.scale, "y", 0.5, 2).name('Scale Shed Height')
+gui.add(wallWidth1.scale, "y", 1, 2).name('Scale Shed Height')
 gui.add(wallDepth1.scale, "z", 0.5, 2).name('Scale Shed Depth')
 //gui.add({InterimVar: interimVariable}, "InterimVar", 0, (2*wallWidth1.geometry.parameters.width + 2*wallDepth1.geometry.parameters.depth - 4*wallWidth1.geometry.parameters.depth),0.1).name('Window Location').onChange(setWindowLocation)
 
@@ -421,7 +450,7 @@ function animate(){
 
   windowAddition() //load window addition function
 
-  floor.position.y = (0 - result.geometry.parameters.height/2 - floor.geometry.parameters.height/2)*wallWidth2.scale.y
+  floor.position.y =  - wallWidth1.geometry.parameters.height / 2 - floor.geometry.parameters.height / 2
 
   renderer.render(scene, camera);
 
