@@ -26,17 +26,19 @@ renderer.render(scene, camera);
 
 //Orbit control
 const controls = new OrbitControls(camera, renderer.domElement);
-//controls.maxPolarAngle = Math.PI / 2
+controls.maxPolarAngle = Math.PI / 2
 controls.maxDistance = 35; //set max zoom out level
 
 //Grid
 //scene.add(new THREE.GridHelper(100,20))
 
 //Textures
-const gardenTexture = new THREE.TextureLoader().load('garden.jpg');
+const gardenTexture = new THREE.TextureLoader().load('sky.jpg');
 const brickTexture = new THREE.TextureLoader().load('brick.jpg');
 const tilesTexture = new THREE.TextureLoader().load("tiles.jpg");
 const grassTexture = new THREE.TextureLoader().load("grass.jpeg")
+grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping
+grassTexture.repeat.set(5,5)
 
 //Materials
 const brickMaterial = new THREE.MeshBasicMaterial({color: 0x000000});
@@ -52,10 +54,10 @@ scene.background = gardenTexture;
 
 const floor2_geom = new THREE.BufferGeometry()
 const vertices_floor = new Float32Array([
-  -10, -5, 10,
-  10, -5, - 10,
-  -10, -5, -10,
-  10, -5, 10])
+  -50, -5, 50, //1 + 4 + 7 + 10
+  50, -5, - 50, 
+  -50, -5, -50,
+  50, -5, 50])
 
 const indices_floor = [
   0, 3, 1,
@@ -76,7 +78,7 @@ floor2_geom.computeVertexNormals();
 
 const floor_v2 = new THREE.Mesh(floor2_geom, floorMaterial)
 
-const floor = new THREE.Mesh(new THREE.BoxGeometry(1000,0,1000), floorMaterial)
+vertices_floor[1] = vertices_floor[4] = vertices_floor[7] = vertices_floor[10] = 0
 
 scene.add(floor_v2)
 
@@ -301,6 +303,16 @@ function updatePrism() {
   geometry3.computeVertexNormals();
 }
 
+function updateFloor(){
+  floor2_geom.attributes.position.setY(0, wallWidth1.scale.y * - wallWidth1.geometry.parameters.height / 2 )
+  floor2_geom.attributes.position.setY(1, wallWidth1.scale.y * - wallWidth1.geometry.parameters.height / 2 )
+  floor2_geom.attributes.position.setY(2, wallWidth1.scale.y * - wallWidth1.geometry.parameters.height / 2 )
+  floor2_geom.attributes.position.setY(3, wallWidth1.scale.y * - wallWidth1.geometry.parameters.height / 2 )
+
+  floor2_geom.attributes.position.needsUpdate = true;
+  floor2_geom.computeVertexNormals()
+}
+
 let resultDepth, resultDepth2
 
 //function for adding window:
@@ -450,7 +462,7 @@ function animate(){
 
   windowAddition() //load window addition function
 
-  floor.position.y =  - wallWidth1.geometry.parameters.height / 2 - floor.geometry.parameters.height / 2
+  updateFloor() //load function which update floor height
 
   renderer.render(scene, camera);
 
