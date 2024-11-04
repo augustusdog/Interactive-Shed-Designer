@@ -43,7 +43,8 @@ grassTexture.repeat.set(5,5)
 //Materials
 const brickMaterial = new THREE.MeshBasicMaterial({color: 0x000000});
 const floorMaterial = new THREE.MeshBasicMaterial({color: 0x3f9b0b, map: grassTexture});
-const tilesMaterial = new THREE.MeshBasicMaterial({ map: tilesTexture});
+const tilesMaterial_with_texture = new THREE.MeshBasicMaterial({ map: tilesTexture});
+const tilesMaterial = new THREE.MeshBasicMaterial();
 const windowMaterial = new THREE.MeshBasicMaterial({color: 0xffffff});
 const brushMat = new THREE.MeshBasicMaterial({color: 0xffc400})
 tilesMaterial.side = THREE.DoubleSide;
@@ -101,9 +102,9 @@ let wallDepth2 = new Operation(wallDepthGeom, brickMaterial)
 
 //Window frame
 const windowParams = {
-  addWindow1: false, //Default state is window not added
-  addWindow2: false,
-  addWindow3: false
+  addWindow1: true, //Default state is window not added
+  addWindow2: true,
+  addWindow3: true
 }
 
 //in x plane
@@ -356,6 +357,7 @@ function windowAddition(){
 
   result.scale.x = wallWidth1.scale.x
   result.scale.y = wallWidth1.scale.y
+  hole_x.scale.y = 1
 
 	scene.add( result );
 
@@ -395,6 +397,9 @@ function windowAddition(){
   resultDepth2.scale.z = wallDepth2.scale.z
   resultDepth2.scale.y = wallDepth2.scale.y
 
+  console.log("height ", wallDepth2.geometry.parameters.height)
+  console.log("y scale ", resultDepth2.scale.y)
+
   scene.add(resultDepth2)
 }
 
@@ -408,26 +413,74 @@ gui.add(wallDepth1.scale, "z", 0.5, 2).name('Scale Shed Depth')
 //gui.add({InterimVar: interimVariable}, "InterimVar", 0, (2*wallWidth1.geometry.parameters.width + 2*wallDepth1.geometry.parameters.depth - 4*wallWidth1.geometry.parameters.depth),0.1).name('Window Location').onChange(setWindowLocation)
 
 const colorParams = {
-  color: '#000000' // Hex string for white, initial color
+  colorWall: '#000000', // Hex string for white, initial color
+  colorRoof: '#FFFFFF'
 };
 
 // Function to update the wall colour
-function updateColor() {
+function updateColorWalls() {
   // Convert hex to a number for Three.js color
-  const colorValue = colorParams.color.replace('#', '0x');
+  const colorValue = colorParams.colorWall.replace('#', '0x');
   wallWidth1.material.color.set(parseInt(colorValue, 16));
 }
 
+function updateColorRoof() {
+  // Convert hex to a number for Three.js color
+  const colorValue2 = colorParams.colorRoof.replace('#', '0x');
+  slope1.material.color.set(parseInt(colorValue2, 16));
+}
+
 // Add a color picker to the GUI
-gui.addColor(colorParams, 'color').name('Colour of Walls').onChange(updateColor);
+gui.addColor(colorParams, 'colorWall').name('Colour of Walls').onChange(updateColorWalls);
+gui.addColor(colorParams, 'colorRoof').name('Colour of Roof').onChange(updateColorRoof);
 
 gui.add(windowParams, 'addWindow1').name('Add Window 1')
+
+const interimBox = new THREE.Mesh(new THREE.BoxGeometry(2,2,2), brickMaterial)
+
+function updateWindow1_scale(){
+  windowGroup_x.scale.x = interimBox.scale.x
+  windowGroup_x.scale.y = interimBox.scale.y
+}
+
+gui.add(interimBox.scale, "y", 0.5, 1).name('Window1 Height')
+gui.add(interimBox.scale, "x", 0.5, 2).name('Window1 Length')
+
+gui.add(windowGroup_x.position, "x", -wallWidth1.geometry.parameters.width/2 + hole_x.geometry.parameters.width/2, wallWidth1.geometry.parameters.width/2 - hole_x.geometry.parameters.width/2).name("Window1 Position x")
+gui.add(windowGroup_x.position, "y", -wallWidth1.geometry.parameters.height/2 + hole_x.geometry.parameters.height/2, wallWidth1.geometry.parameters.height/2 - hole_x.geometry.parameters.height/2).name("Window1 Position y")
+
 gui.add(windowParams, 'addWindow2').name('Add Window 2')
+
+const interimBox2 = new THREE.Mesh(new THREE.BoxGeometry(2,2,2), brickMaterial)
+
+function updateWindow2_scale(){
+  windowGroup_z.scale.z = interimBox2.scale.z
+  windowGroup_z.scale.y = interimBox2.scale.y
+}
+
+gui.add(interimBox2.scale, "y", 0.5, 1).name('Window2 Height')
+gui.add(interimBox2.scale, "z", 0.5, 2).name('Window2 Length')
+
+gui.add(windowGroup_z.position, "z", -wallDepth1.geometry.parameters.depth/2 + hole_z.geometry.parameters.depth, wallDepth1.geometry.parameters.depth/2 - hole_z.geometry.parameters.depth).name("Window 2 Position x")
+gui.add(windowGroup_z.position, "y", -wallWidth1.geometry.parameters.height/2 + hole_x.geometry.parameters.height/2, wallWidth1.geometry.parameters.height/2 - hole_x.geometry.parameters.height/2).name("Window2 Position y")
+
+
 gui.add(windowParams, 'addWindow3').name('Add Window 3')
 
-gui.add(windowGroup_x.position, "x", -wallWidth1.geometry.parameters.width/2 + hole_x.geometry.parameters.width/2, wallWidth1.geometry.parameters.width/2 - hole_x.geometry.parameters.width/2).name("Window 1 Position")
-gui.add(windowGroup_z.position, "z", -wallDepth1.geometry.parameters.depth/2 + hole_z.geometry.parameters.depth, wallDepth1.geometry.parameters.depth/2 - hole_z.geometry.parameters.depth).name("Window 2 Position")
-gui.add(windowGroup_2z.position, "z", -wallDepth1.geometry.parameters.depth/2 + hole_z.geometry.parameters.depth, wallDepth1.geometry.parameters.depth/2 - hole_z.geometry.parameters.depth).name("Window 3 Position")
+const interimBox3 = new THREE.Mesh(new THREE.BoxGeometry(2,2,2), brickMaterial)
+
+function updateWindow3_scale(){
+  windowGroup_2z.scale.z = interimBox3.scale.z
+  windowGroup_2z.scale.y = interimBox3.scale.y
+}
+
+gui.add(interimBox3.scale, "y", 0.5, 1).name('Window3 Height')
+gui.add(interimBox3.scale, "z", 0.5, 2).name('Window3 Length')
+
+
+gui.add(windowGroup_2z.position, "z", -wallDepth1.geometry.parameters.depth/2 + hole_z.geometry.parameters.depth, wallDepth1.geometry.parameters.depth/2 - hole_z.geometry.parameters.depth).name("Window 3 Position x")
+gui.add(windowGroup_2z.position, "y", -wallWidth1.geometry.parameters.height/2 + hole_x.geometry.parameters.height/2, wallWidth1.geometry.parameters.height/2 - hole_x.geometry.parameters.height/2).name("Window3 Position y")
+
 ///////////////////////Render function//////////////////////////////////////
 //ANIMATE FUNCTION
 //////////////////
@@ -463,6 +516,10 @@ function animate(){
   windowAddition() //load window addition function
 
   updateFloor() //load function which update floor height
+
+  updateWindow1_scale()
+  updateWindow2_scale()
+  updateWindow3_scale()
 
   renderer.render(scene, camera);
 
