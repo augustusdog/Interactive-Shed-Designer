@@ -188,6 +188,13 @@ scene.add(door_side)
 
 //Roof
 
+let flatRoofGeom = new THREE.BoxGeometry(wallWidth1.geometry.parameters.width + 2 * wallWidth1.geometry.parameters.depth, wallWidth1.geometry.parameters.depth, wallDepth1.geometry.parameters.depth)
+const flatRoof = new THREE.Mesh(flatRoofGeom, tilesMaterial)
+
+flatRoof.position.y = wallWidth1.geometry.parameters.depth/2 + wallWidth1.geometry.parameters.height / 2
+
+scene.add(flatRoof)
+
 let geometry1 = new THREE.BufferGeometry();
 let geometry2 = new THREE.BufferGeometry();
 let geometry3 = new THREE.BufferGeometry();
@@ -262,9 +269,27 @@ const slope1 = new THREE.Mesh(geometry1, tilesMaterial);
 const slope2 = new THREE.Mesh(geometry2, tilesMaterial);
 const endBits = new THREE.Mesh(geometry3, tilesMaterial)
 
-scene.add(slope1, slope2, endBits);
+//scene.add(slope1, slope2, endBits);
 
 //Functions
+
+function updateRoof(){
+  flatRoof.scale.x = wallWidth1.scale.x
+  flatRoof.scale.z = wallDepth1.scale.z
+  flatRoof.position.y = flatRoof.geometry.parameters.height/2 + (wallWidth1.scale.y * wallWidth1.geometry.parameters.height/2)
+}
+
+function roofChoice(){
+  if (roofOptions.selectedRoofOption == "Flat"){
+    scene.remove(slope1, slope2, endBits)
+    scene.add(flatRoof)
+  }
+
+  else{
+    scene.remove(flatRoof)
+    scene.add(slope1, slope2, endBits)
+  }
+}
 
 function updatePrism() {
   const width = (wallWidth1.scale.x * wallWidth1.geometry.parameters.width + 2*wallDepth1.geometry.parameters.width)/2;
@@ -432,6 +457,13 @@ function updateColorRoof() {
 
 // Add a color picker to the GUI
 gui.addColor(colorParams, 'colorWall').name('Colour of Walls').onChange(updateColorWalls);
+
+const roofOptions = {
+  selectedRoofOption: "Flat"
+}
+
+gui.add(roofOptions, "selectedRoofOption", ["Flat", "Apex"]).onChange(roofChoice)
+
 gui.addColor(colorParams, 'colorRoof').name('Colour of Roof').onChange(updateColorRoof);
 
 gui.add(windowParams, 'addWindow1').name('Add Window 1')
@@ -512,6 +544,8 @@ function animate(){
   door_side.scale.y = wallWidth2.scale.y
 
   updatePrism() //load function which updates apex roof
+
+  updateRoof()
 
   windowAddition() //load window addition function
 
