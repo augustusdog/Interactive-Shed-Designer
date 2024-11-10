@@ -38,7 +38,7 @@ const brickTexture = new THREE.TextureLoader().load('brick.jpg');
 const tilesTexture = new THREE.TextureLoader().load("tiles.jpg");
 const grassTexture = new THREE.TextureLoader().load("grass.jpeg")
 grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping
-grassTexture.repeat.set(5,5)
+grassTexture.repeat.set(10,10)
 
 //Materials
 const brickMaterial = new THREE.MeshBasicMaterial({color: 0x000000});
@@ -48,7 +48,7 @@ const tilesMaterial = new THREE.MeshBasicMaterial();
 const windowMaterial = new THREE.MeshBasicMaterial({color: 0xffffff});
 const brushMat = new THREE.MeshBasicMaterial({color: 0xffc400})
 tilesMaterial.side = THREE.DoubleSide;
-const resultGridMat = brushMat.clone();
+
 
 //Background
 scene.background = gardenTexture;
@@ -85,31 +85,40 @@ scene.add(floor_v2)
 
 //Complex Solid Geometry Variables
 let csgEvaluator;
-let result
 
 csgEvaluator = new Evaluator();
 csgEvaluator.attributes = [ 'position', 'normal' ];
 csgEvaluator.useGroups = false;
 
 //Walls
-let wallWidthGeom = new THREE.BoxGeometry(10, 3, 1)
-let wallDepthGeom = new THREE.BoxGeometry(1, 3, 11)
+let wallWidthGeom = new THREE.BoxGeometry(2, 2, 2)
+let wallDepthGeom = new THREE.BoxGeometry(2, 2, 2)
 
 let wallWidth1 = new Operation(wallWidthGeom, brickMaterial)
 let wallWidth2 = new Operation(wallWidthGeom, brickMaterial)
 let wallDepth1 = new Operation(wallDepthGeom, brickMaterial)
 let wallDepth2 = new Operation(wallDepthGeom, brickMaterial)
 
+//used as reference to edit wall width params while fixing scale at 1 (necessary for CSG ops)
+let wallWidth1Decoy = new THREE.Mesh( new THREE.BoxGeometry( wallWidth1.geometry.parameters.width, wallWidth1.geometry.parameters.height, wallWidth1.geometry.parameters.depth ), brickMaterial)
+let wallDepth1Decoy = new THREE.Mesh( new THREE.BoxGeometry(wallDepth1.geometry.parameters.width, wallDepth1.geometry.parameters.height, wallDepth1.geometry.parameters.depth), brickMaterial)
+
+wallWidth1Decoy.scale.x = 6
+wallWidth1Decoy.scale.y = 2
+wallDepth1Decoy.scale.z = 6
+
+scene.add(wallWidth1, wallWidth2, wallDepth1, wallDepth2)
+
 //Window frame
 const windowParams = {
-  addWindow1: true, //Default state is window not added
-  addWindow2: true,
-  addWindow3: true
+  addWindow1: false, //Default state is window not added
+  addWindow2: false,
+  addWindow3: false
 }
 
 //in x plane
 
-let hole_door = new Operation(new THREE.BoxGeometry(1.6, 2.8, wallWidthGeom.depth), brickMaterial);
+let hole_door = new Operation(new THREE.BoxGeometry(1.6, 4.6, wallWidthGeom.depth), brickMaterial);
 hole_door.operation = SUBTRACTION;
 
 let frame_x = new Operation( new THREE.BoxGeometry( 2, 1.75, wallWidthGeom.depth), brickMaterial );
@@ -125,7 +134,7 @@ let bar2_x = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), brickMaterial)
 bar2_x.operation = ADDITION;
 
 let windowGroup_x = new OperationGroup();
-windowGroup_x.add(frame_x, hole_x, bar1_x, bar2_x );
+windowGroup_x.add(hole_x, frame_x, hole_x, bar1_x, bar2_x);
 
 let frame_2x = new Operation( new THREE.BoxGeometry( 2, 1.75, wallWidthGeom.depth), brickMaterial );
 frame_2x.operation = ADDITION;
@@ -142,8 +151,6 @@ bar2_2x.operation = ADDITION;
 let windowGroup_2x = new OperationGroup();
 windowGroup_2x.add(frame_2x, hole_2x, bar1_2x, bar2_2x );
 
-windowGroup_x.position.x = 0
-windowGroup_2x.position.x = 3
 
 //in z plane
 let frame_z = new Operation( new THREE.BoxGeometry( wallWidthGeom.depth , 1.75, 2 ), brickMaterial );
@@ -176,22 +183,13 @@ bar2_2z.operation = ADDITION;
 let windowGroup_2z = new OperationGroup();
 windowGroup_2z.add(frame_2z, hole_2z, bar1_2z, bar2_2z );
 
-//side2 = new Operation( wallWidthGeom, brickMaterial );
+let flatRoofGeom, flatRoof
 
-// wallWidth2.add(hole_door)
-
-// hole_door.position.y = -0.5
-
-// const door_side = csgEvaluator.evaluateHierarchy(wallWidth2)
-
-// scene.add(door_side)
-
-//Roof
-
-let flatRoofGeom = new THREE.BoxGeometry(wallWidth1.geometry.parameters.width + 2 * wallWidth1.geometry.parameters.depth, wallWidth1.geometry.parameters.depth, wallDepth1.geometry.parameters.depth)
-const flatRoof = new THREE.Mesh(flatRoofGeom, tilesMaterial)
+flatRoofGeom = new THREE.BoxGeometry((wallWidth1.geometry.parameters.width * wallWidth1Decoy.scale.x) + (12 / wallWidth1Decoy.scale.x), 1, wallDepth1.geometry.parameters.depth * wallDepth1Decoy.scale.z)
+flatRoof = new THREE.Mesh(flatRoofGeom, tilesMaterial)
 
 flatRoof.position.y = wallWidth1.geometry.parameters.depth/2 + wallWidth1.geometry.parameters.height / 2
+
 
 scene.add(flatRoof)
 
@@ -274,8 +272,9 @@ const endBits = new THREE.Mesh(geometry3, tilesMaterial)
 //Functions
 
 function updateRoof(){
-  flatRoof.scale.x = wallWidth1Decoy.scale.x
-  flatRoof.scale.z = wallDepth1Decoy.scale.z
+
+  flatRoof.scale.x = wallWidth1Decoy.scale.x / 6
+  flatRoof.scale.z = wallDepth1Decoy.scale.z / 6
   flatRoof.position.y = flatRoof.geometry.parameters.height/2 + (wallWidth1.scale.y * wallWidth1.geometry.parameters.height/2)
 }
 
@@ -292,9 +291,9 @@ function roofChoice(){
 }
 
 function updatePrism() {
-  const width = (wallWidth1Decoy.scale.x * wallWidth1.geometry.parameters.width + 2*wallDepth1.geometry.parameters.width)/2;
-  const height = (wallWidth1.scale.y * wallWidth1.geometry.parameters.height)/2;
-  const depth = (wallDepth2.scale.z * wallDepth2.geometry.parameters.depth)/2;
+  const width = ((wallWidth1Decoy.scale.x / 6) * wallWidth1.geometry.parameters.width + 2*wallDepth1.geometry.parameters.width)/2;
+  const height = ((wallWidth1Decoy.scale.y/2) * wallWidth1.geometry.parameters.height)/2;
+  const depth = ((wallDepth1Decoy.scale.z / 6) * wallDepth2.geometry.parameters.depth)/2;
 
   // Update vertex positions here using `width`, `height`, and `depth`.
   // For example, for the first vertex of the front triangle:
@@ -330,137 +329,37 @@ function updatePrism() {
 }
 
 function updateFloor(){
-  floor2_geom.attributes.position.setY(0, wallWidth1.scale.y * - wallWidth1.geometry.parameters.height / 2 )
-  floor2_geom.attributes.position.setY(1, wallWidth1.scale.y * - wallWidth1.geometry.parameters.height / 2 )
-  floor2_geom.attributes.position.setY(2, wallWidth1.scale.y * - wallWidth1.geometry.parameters.height / 2 )
-  floor2_geom.attributes.position.setY(3, wallWidth1.scale.y * - wallWidth1.geometry.parameters.height / 2 )
+  floor2_geom.attributes.position.setY(0,  - wallWidth1.geometry.parameters.height / 2)
+  floor2_geom.attributes.position.setY(1, - wallWidth1.geometry.parameters.height /2 )
+  floor2_geom.attributes.position.setY(2, - wallWidth1.geometry.parameters.height / 2 )
+  floor2_geom.attributes.position.setY(3, - wallWidth1.geometry.parameters.height / 2 )
 
   floor2_geom.attributes.position.needsUpdate = true;
   floor2_geom.computeVertexNormals()
 }
 
-let door_side
-
-function addDoor(){
-
-  scene.remove(door_side)
-
-  wallWidth2.add(hole_door)
-  hole_door.position.y = -0.5
-
-  door_side = csgEvaluator.evaluateHierarchy(wallWidth2)
-
-  wallWidth2.remove(hole_door)
-
-  scene.add(door_side)
-
-  door_side.position.z = -0.5 + (wallDepth1Decoy.geometry.parameters.depth/2) * wallDepth1Decoy.scale.z//adjust for result's position being relaive to wallWidth1 (as wallWidth1 pressumably parent after CSG eval)
-  door_side.scale.x = wallWidth1Decoy.scale.x
-  door_side.scale.y = wallWidth1Decoy.scale.y
+const doorParams = {
+  doorParam: false
 }
+
+
 
 let resultDepth, resultDepth2
+let interimBox
+interimBox = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), brickMaterial)
 
-//function for adding window:
-function windowAddition(){
-  if (result){
-    scene.remove(result)
-  }
+function updateWindow1_scale(){
 
-  if (resultDepth){
-    scene.remove(resultDepth)
-  }
+  windowGroup_x.scale.x = interimBox.scale.x
+  windowGroup_x.scale.y = interimBox.scale.y
 
-  if (resultDepth2){
-    scene.remove(resultDepth2)
-  }
-
-
-  if (windowParams.addWindow1 == true){
-
-    wallWidth1.add(windowGroup_x)
-
-    updateWindow1_scale() //scales window to desired size
-
-    result = csgEvaluator.evaluateHierarchy(wallWidth1)
-    
-    result.material = brickMaterial;
-    result.position.z = wallWidth1.position.z
-    //result.position.z = wallDepth1.geometry.parameters.depth/2 - (wallDepth1.geometry.parameters.depth * wallDepth1Decoy.scale.z) //adjust for result's position being relaive to wallWidth1 (as wallWidth1 pressumably parent after CSG eval)
-    wallWidth1.remove(windowGroup_x)
-
-
-  }else{
-    result = wallWidth1
-  }
-  
-  result.scale.x = wallWidth1Decoy.scale.x
-  result.scale.y = wallWidth1Decoy.scale.y
-
-	scene.add( result );
-
-  if (windowParams.addWindow2 == true){
-
-    updateWindow2_scale()
-
-    wallDepth1.add(windowGroup_z)
-
-    resultDepth = csgEvaluator.evaluateHierarchy(wallDepth1)
-
-    resultDepth.position.x = wallDepth1.position.x
-    resultDepth.position.x = wallDepth1.position.x - 5.5
-
-    resultDepth.material = brickMaterial
-
-  }else{
-    wallDepth1.remove(windowGroup_z)
-    resultDepth = wallDepth1
-  }
-
-  resultDepth.scale.z = wallDepth1Decoy.scale.z
-  resultDepth.scale.y = wallWidth1Decoy.scale.y
-
-  scene.add(resultDepth)
-
-  if(windowParams.addWindow3 == true){
-
-    updateWindow3_scale()
-
-    wallDepth2.add(windowGroup_2z)
-
-    resultDepth2 = csgEvaluator.evaluateHierarchy(wallDepth2)
-
-    resultDepth2.position.x = wallDepth2.position.x
-    resultDepth2.position.x = wallDepth2.position.x + 5.5
-
-  }else{
-      wallDepth2.remove(windowGroup_2z)
-      resultDepth2 = wallDepth2
-  }
-
-  resultDepth2.scale.z = wallDepth1Decoy.scale.z
-  resultDepth2.scale.y = wallWidth1Decoy.scale.y
-
-  scene.add(resultDepth2)
 }
 
-//User interface
+let lastScale_x, lastScale_y, lastScale_z
 
-const gui = new dat.GUI()
-
-//used as reference to edit wall width params while fixing scale at 1 (necessary for CSG ops)
-let wallWidth1Decoy = new THREE.Mesh( new THREE.BoxGeometry( wallWidth1.geometry.parameters.width, wallWidth1.geometry.parameters.height, wallWidth1.geometry.parameters.depth ), brickMaterial)
-let wallDepth1Decoy = new THREE.Mesh( new THREE.BoxGeometry(wallDepth1.geometry.parameters.width, wallDepth1.geometry.parameters.height, wallDepth1.geometry.parameters.depth), brickMaterial)
-
-gui.add(wallWidth1Decoy.scale, "x", 0.5, 2).name('Scale Shed Width')
-gui.add(wallWidth1Decoy.scale, "y", 1, 2).name('Scale Shed Height')
-gui.add(wallDepth1Decoy.scale, "z", 0.5, 2).name('Scale Shed Depth')
-//gui.add({InterimVar: interimVariable}, "InterimVar", 0, (2*wallWidth1.geometry.parameters.width + 2*wallDepth1.geometry.parameters.depth - 4*wallWidth1.geometry.parameters.depth),0.1).name('Window Location').onChange(setWindowLocation)
-
-const colorParams = {
-  colorWall: '#000000', // Hex string for white, initial color
-  colorRoof: '#FFFFFF'
-};
+const roofOptions = {
+  selectedRoofOption: "Flat"
+}
 
 // Function to update the wall colour
 function updateColorWalls() {
@@ -475,33 +374,10 @@ function updateColorRoof() {
   slope1.material.color.set(parseInt(colorValue2, 16));
 }
 
-// Add a color picker to the GUI
-gui.addColor(colorParams, 'colorWall').name('Colour of Walls').onChange(updateColorWalls);
-
-const roofOptions = {
-  selectedRoofOption: "Flat"
-}
-
-gui.add(roofOptions, "selectedRoofOption", ["Flat", "Apex"]).onChange(roofChoice)
-
-gui.addColor(colorParams, 'colorRoof').name('Colour of Roof').onChange(updateColorRoof);
-
-gui.add(windowParams, 'addWindow1').name('Add Window 1')
-
-const interimBox = new THREE.Mesh(new THREE.BoxGeometry(2,2,2), brickMaterial)
-
-function updateWindow1_scale(){
-  windowGroup_x.scale.x = interimBox.scale.x
-  windowGroup_x.scale.y = interimBox.scale.y
-}
-
-gui.add(interimBox.scale, "y", 0.5, 1).name('Window1 Height')
-gui.add(interimBox.scale, "x", 0.5, 2).name('Window1 Length')
-
-gui.add(windowGroup_x.position, "x", -wallWidth1.geometry.parameters.width/2 + hole_x.geometry.parameters.width/2, wallWidth1.geometry.parameters.width/2 - hole_x.geometry.parameters.width/2).name("Window1 Position x")
-gui.add(windowGroup_x.position, "y", -wallWidth1.geometry.parameters.height/2 + hole_x.geometry.parameters.height/2, wallWidth1.geometry.parameters.height/2 - hole_x.geometry.parameters.height/2).name("Window1 Position y")
-
-gui.add(windowParams, 'addWindow2').name('Add Window 2')
+const colorParams = {
+  colorWall: '#000000', // Hex string for white, initial color
+  colorRoof: '#FFFFFF'
+};
 
 const interimBox2 = new THREE.Mesh(new THREE.BoxGeometry(2,2,2), brickMaterial)
 
@@ -510,15 +386,6 @@ function updateWindow2_scale(){
   windowGroup_z.scale.y = interimBox2.scale.y
 }
 
-gui.add(interimBox2.scale, "y", 0.5, 1).name('Window2 Height')
-gui.add(interimBox2.scale, "z", 0.5, 2).name('Window2 Length')
-
-gui.add(windowGroup_z.position, "z", -wallDepth1.geometry.parameters.depth/2 + hole_z.geometry.parameters.depth, wallDepth1.geometry.parameters.depth/2 - hole_z.geometry.parameters.depth).name("Window 2 Position x")
-gui.add(windowGroup_z.position, "y", -wallWidth1.geometry.parameters.height/2 + hole_x.geometry.parameters.height/2, wallWidth1.geometry.parameters.height/2 - hole_x.geometry.parameters.height/2).name("Window2 Position y")
-
-
-gui.add(windowParams, 'addWindow3').name('Add Window 3')
-
 const interimBox3 = new THREE.Mesh(new THREE.BoxGeometry(2,2,2), brickMaterial)
 
 function updateWindow3_scale(){
@@ -526,76 +393,326 @@ function updateWindow3_scale(){
   windowGroup_2z.scale.y = interimBox3.scale.y
 }
 
-gui.add(interimBox3.scale, "y", 0.5, 1).name('Window3 Height')
-gui.add(interimBox3.scale, "z", 0.5, 2).name('Window3 Length')
 
+//User interface
 
-gui.add(windowGroup_2z.position, "z", -wallDepth1.geometry.parameters.depth/2 + hole_z.geometry.parameters.depth, wallDepth1.geometry.parameters.depth/2 - hole_z.geometry.parameters.depth).name("Window 3 Position x")
-gui.add(windowGroup_2z.position, "y", -wallWidth1.geometry.parameters.height/2 + hole_x.geometry.parameters.height/2, wallWidth1.geometry.parameters.height/2 - hole_x.geometry.parameters.height/2).name("Window3 Position y")
+const gui = new dat.GUI()
+
+var folder1 = gui.addFolder("1. Select Shed Size")
+var folder2 = gui.addFolder("2. Select Window and Doors")
+var folder3 = gui.addFolder("3. Select Roof Type")
+var folder4 = gui.addFolder("4. Select Colours")
+var folder5 = gui.addFolder("5. Misc Stuff - sort tomorow")
+
+folder1.add(wallWidth1Decoy.scale, "x", 4, 10).name('Shed Width (Metres)')
+folder1.add(wallWidth1Decoy.scale, "y", 1.5, 2.5).name('Shed Height (Metres)')
+folder1.add(wallDepth1Decoy.scale, "z", 4, 10).name('Shed Depth (Metres)')
+
+folder2.add(windowParams, 'addWindow1').name('Add Window 1')
+folder2.add(windowParams, 'addWindow2').name('Add Window 2')
+folder2.add(windowParams, 'addWindow3').name('Add Window 3')
+folder2.add(doorParams, 'doorParam').name('Add Door')
+
+folder3.add(roofOptions, "selectedRoofOption", ["Flat", "Apex"]).onChange(roofChoice).name("Select Roof Type")
+
+folder4.addColor(colorParams, 'colorWall').name('Colour of Walls').onChange(updateColorWalls);
+folder4.addColor(colorParams, 'colorRoof').name('Colour of Roof').onChange(updateColorRoof);
+
+folder5.add(interimBox.scale, "y", 0.5, 1).name('Window1 Height')
+folder5.add(interimBox.scale, "x", 0.5, 2).name('Window1 Length')
+folder5.add(windowGroup_x.position, "x", -wallWidth1.geometry.parameters.width/2 + hole_x.geometry.parameters.width/2, wallWidth1.geometry.parameters.width/2 - hole_x.geometry.parameters.width/2).name("Window1 Position x")
+folder5.add(windowGroup_x.position, "y", -wallWidth1.geometry.parameters.height/2 + hole_x.geometry.parameters.height/2, wallWidth1.geometry.parameters.height/2 - hole_x.geometry.parameters.height/2).name("Window1 Position y")
+
+folder5.add(interimBox2.scale, "y", 0.5, 1).name('Window2 Height')
+folder5.add(interimBox2.scale, "z", 0.5, 2).name('Window2 Length')
+
+folder5.add(windowGroup_z.position, "z", -wallDepth1.geometry.parameters.depth/2 + hole_z.geometry.parameters.depth, wallDepth1.geometry.parameters.depth/2 - hole_z.geometry.parameters.depth).name("Window 2 Position x")
+folder5.add(windowGroup_z.position, "y", -wallWidth1.geometry.parameters.height/2 + hole_x.geometry.parameters.height/2, wallWidth1.geometry.parameters.height/2 - hole_x.geometry.parameters.height/2).name("Window2 Position y")
+
+folder5.add(interimBox3.scale, "y", 0.5, 1).name('Window3 Height')
+folder5.add(interimBox3.scale, "z", 0.5, 2).name('Window3 Length')
+
+folder5.add(windowGroup_2z.position, "z", -wallDepth1.geometry.parameters.depth/2 + hole_z.geometry.parameters.depth, wallDepth1.geometry.parameters.depth/2 - hole_z.geometry.parameters.depth).name("Window 3 Position x")
+folder5.add(windowGroup_2z.position, "y", -wallWidth1.geometry.parameters.height/2 + hole_x.geometry.parameters.height/2, wallWidth1.geometry.parameters.height/2 - hole_x.geometry.parameters.height/2).name("Window3 Position y")
 
 ///////////////////////Render function//////////////////////////////////////
 //ANIMATE FUNCTION
 //////////////////
+
+let newWallWidthGeom, newWallDepthGeom
+
+function UpdateMajorGeoms(){
+  if (wallWidth1Decoy.scale.x != lastScale_x || wallWidth1Decoy.scale.y != lastScale_y || wallDepth1Decoy.scale.z != lastScale_z){
+
+    updateGeometries()
+    
+    console.log("a major geometry change has been made")
+
+  }
+
+  //records last value for scales
+  lastScale_x = wallWidth1Decoy.scale.x
+  lastScale_y = wallWidth1Decoy.scale.y
+  lastScale_z = wallDepth1Decoy.scale.z
+
+}
+
+function updateGeometries(){
+    //update Wall Geometries whilst maintaining scale of 1
+    const newWidth = wallWidth1Decoy.geometry.parameters.width * wallWidth1Decoy.scale.x
+    const newHeight = wallWidth1Decoy.geometry.parameters.height * wallWidth1Decoy.scale.y
+    const newDepth = wallDepth1Decoy.geometry.parameters.depth * wallDepth1Decoy.scale.z
+  
+    //dispose of old geometries
+    wallWidth1.geometry.dispose()
+    wallWidth2.geometry.dispose()
+    wallDepth1.geometry.dispose()
+    wallDepth2.geometry.dispose()
+
+    //create new geometries
+    wallWidth1.geometry = new THREE.BoxGeometry(newWidth, newHeight, 1)
+    wallWidth2.geometry = new THREE.BoxGeometry(newWidth, newHeight, 1)
+    wallDepth1.geometry = new THREE.BoxGeometry(1, newHeight, newDepth)
+    wallDepth2.geometry = new THREE.BoxGeometry(1, newHeight, newDepth)
+
+    //reset scale to 1
+    wallWidth1.scale.set(1,1,1)
+    wallWidth2.scale.set(1,1,1)
+    wallDepth1.scale.set(1,1,1)
+    wallDepth2.scale.set(1,1,1)
+
+    //update matrices for all objects
+    wallWidth1.updateMatrixWorld(true)
+    wallWidth2.updateMatrixWorld(true)
+    wallDepth1.updateMatrixWorld(true)
+    wallDepth2.updateMatrixWorld(true)
+
+    //adjust positions based on new dimensions:
+    wallDepth1.position.x = (wallWidth1.geometry.parameters.width / 2) * wallWidth1Decoy.scale.x + wallDepth1.geometry.parameters.width / 2
+    wallDepth2.position.x = - wallDepth1.position.x
+    wallDepth1.position.z = wallDepth2.position.z = (wallWidth2.position.z / 2) //+ wallWidth1.geometry.parameters.depth/2
+
+    wallDepth1.position.x = (wallWidth1Decoy.geometry.parameters.width / 2) * wallWidth1Decoy.scale.x + wallDepth1.geometry.parameters.width / 2
+    wallDepth2.position.x = - wallDepth1.position.x
+    wallDepth1.position.z = wallDepth2.position.z = (wallWidth2.position.z / 2) //+ wallWidth1.geometry.parameters.depth/2
+
+    wallWidth1.position.z =  wallDepth1.geometry.parameters.depth / 2 - wallWidth1.geometry.parameters.depth / 2//2.5 - 1 * ((wallDepth1Decoy.geometry.parameters.depth / 2) * wallDepth1Decoy.scale.z) + wallWidth1.geometry.parameters.depth / 2
+    wallWidth2.position.z = - 1 * wallWidth1.position.z
+  
+    wallDepth1.position.z = wallDepth2.position.z = 0
+  
+}
+
+let newGeometry, result, csgEvaluator2
+
+function toggleWindow1(){
+
+  if(windowParams.addWindow1 == true){
+
+    scene.remove(wallWidth1)
+
+    wallWidth1.updateMatrix(true)
+    wallWidth1.add(windowGroup_x)
+    wallWidth1.updateMatrixWorld(true)
+
+    csgEvaluator2 = new Evaluator()
+    csgEvaluator2.attributes = ['position', 'normal']
+    csgEvaluator2.useGroups = false
+
+    if (scene.getObjectByName("result")){
+      scene.remove(result)
+      result.geometry.dispose()
+      result.material.dispose()
+      result.parent.remove(result)
+      result.updateMatrixWorld(true)
+    }
+
+    result = csgEvaluator2.evaluateHierarchy(wallWidth1)
+    result.updateMatrixWorld(true)
+    scene.add(result)
+
+    wallWidth1.geometry.dispose()
+    wallWidth1.updateMatrixWorld(true)
+
+  }else{
+    wallWidth1.updateMatrixWorld()
+    scene.add(wallWidth1)
+
+    if (scene.getObjectByName("result")){
+      scene.remove(result)
+      result.geometry.dispose()
+      result.material.dispose()
+      result.parent.remove(result)
+      result.updateMatrixWorld(true)
+    }
+
+  }
+}
+
+let Depth1result
+
+function toggleWindow2(){
+
+  if(windowParams.addWindow2 == true){
+
+    scene.remove(wallDepth1)
+
+    wallDepth1.updateMatrix(true)
+    wallDepth1.add(windowGroup_z)
+    wallDepth1.updateMatrixWorld(true)
+
+    csgEvaluator2 = new Evaluator()
+    csgEvaluator2.attributes = ['position', 'normal']
+    csgEvaluator2.useGroups = false
+
+    if (scene.getObjectByName("Depth1result")){
+      scene.remove(Depth1result)
+      Depth1result.geometry.dispose()
+      Depth1result.material.dispose()
+      Depth1result.parent.remove(Depth1result)
+      Depth1result.updateMatrixWorld(true)
+    }
+
+    Depth1result = csgEvaluator2.evaluateHierarchy(wallDepth1)
+    Depth1result.updateMatrixWorld(true)
+    scene.add(Depth1result)
+
+    wallDepth1.geometry.dispose()
+    wallDepth1.updateMatrixWorld(true)
+
+  }else{
+    wallDepth1.updateMatrixWorld()
+    scene.add(wallDepth1)
+
+    if (scene.getObjectByName("Depth1result")){
+      scene.remove(Depth1result)
+      Depth1result.geometry.dispose()
+      Depth1result.material.dispose()
+      Depth1result.parent.remove(Depth1result)
+      Depth1result.updateMatrixWorld(true)
+    }
+
+  }
+}
+
+let Depth2result
+
+function toggleWindow3(){
+
+  if(windowParams.addWindow3 == true){
+
+    scene.remove(wallDepth2)
+
+    wallDepth2.updateMatrix(true)
+    wallDepth2.add(windowGroup_2z)
+    wallDepth2.updateMatrixWorld(true)
+
+    csgEvaluator2 = new Evaluator()
+    csgEvaluator2.attributes = ['position', 'normal']
+    csgEvaluator2.useGroups = false
+
+    if (scene.getObjectByName("Depth2result")){
+      scene.remove(Depth2result)
+      Depth2result.geometry.dispose()
+      Depth2result.material.dispose()
+      Depth2result.parent.remove(Depth2result)
+      Depth2result.updateMatrixWorld(true)
+    }
+
+    Depth2result = csgEvaluator2.evaluateHierarchy(wallDepth2)
+    Depth2result.updateMatrixWorld(true)
+    scene.add(Depth2result)
+
+    wallDepth2.geometry.dispose()
+    wallDepth2.updateMatrixWorld(true)
+
+  }else{
+    wallDepth2.updateMatrixWorld()
+    scene.add(wallDepth2)
+
+    if (scene.getObjectByName("Depth2result")){
+      scene.remove(Depth2result)
+      Depth2result.geometry.dispose()
+      Depth2result.material.dispose()
+      Depth2result.parent.remove(Depth2result)
+      Depth2result.updateMatrixWorld(true)
+    }
+
+  }
+}
+
+let door_side
+
+function toggleDoor(){
+
+  if (doorParams.doorParam == true){
+
+    scene.remove(wallWidth2)
+
+    wallWidth2.updateMatrix(true)
+    wallWidth2.add(hole_door)
+    wallWidth2.updateMatrixWorld(true)
+
+    if (scene.getObjectByName("door_side")){
+      scene.remove(door_side)
+      door_side.geometry.dispose()
+      door_side.material.dispose()
+      door_side.parent.remove(door_side)
+      door_side.updateMatrixWorld(true)
+    }
+
+    csgEvaluator2 = new Evaluator()
+    csgEvaluator2.attributes = ['position', 'normal']
+    csgEvaluator2.useGroups = false
+
+    door_side = csgEvaluator2.evaluateHierarchy(wallWidth2)
+    door_side.updateMatrixWorld(true)
+    scene.add(door_side)
+
+    wallWidth2.geometry.dispose()
+    wallWidth2.updateMatrixWorld(true)
+
+    hole_door.position.y = -1.5
+
+    }else{
+
+      wallWidth2.updateMatrixWorld(true)
+      scene.add(wallWidth2)
+
+      if (scene.getObjectByName("door_side")){
+        scene.remove(door_side)
+        door_side.geometry.dispose()
+        door_side.material.dispose()
+        door_side.parent.remove(door_side)
+        door_side.updateMatrixWorld(true)
+      }
+    }
+}
 
 function animate(){
 
   requestAnimationFrame(animate);
 
   controls.update();
-  
 
-  //UpdateWallWidth Geometries whilst maintaining scale of 1
-  wallWidth1.geometry.parameters.width = wallWidth1Decoy.geometry.parameters.width * wallWidth1Decoy.scale.x
-  wallWidth1.geometry.parameters.height = wallWidth1Decoy.geometry.parameters.height * wallWidth1Decoy.scale.y
-  wallWidth1.scale.set(1,1,1)
-  wallWidth1.updateMatrixWorld(true)
+  UpdateMajorGeoms()
 
-  wallWidth2.geometry.parameters.width = wallWidth1.geometry.parameters.width
-  wallWidth2.geometry.parameters.height = wallWidth1.geometry.parameters.height
-  wallWidth2.scale.set(1,1,1)
-  wallWidth2.updateMatrixWorld(true)
-
-  //Update WallDepth Geometries whilst maintaining scale of 1
-  wallDepth1.geometry.parameters.depth = wallDepth1Decoy.geometry.parameters.depth * wallDepth1Decoy.scale.z
-  wallDepth2.geometry.parameters.depth = wallDepth1.geometry.parameters.depth
-
-  wallDepth1.geometry.parameters.height = wallDepth2.geometry.parameters.height = wallWidth1.geometry.parameters.height
-
-  wallDepth1.scale.set(1,1,1)
-  wallDepth2.scale.set(1,1,1)
-
-  //adjusting positions when scaling width
-  wallDepth1.position.x = (wallWidth1.geometry.parameters.width / 2) * wallWidth1Decoy.scale.x + wallDepth1.geometry.parameters.width / 2
-  wallDepth2.position.x = - wallDepth1.position.x
-  wallDepth1.position.z = wallDepth2.position.z = (wallWidth2.position.z / 2) //+ wallWidth1.geometry.parameters.depth/2
-
-  //adjusting positions when scaling height
-  wallDepth1.position.x = (wallWidth1Decoy.geometry.parameters.width / 2) * wallWidth1Decoy.scale.x + wallDepth1.geometry.parameters.width / 2
-  wallDepth2.position.x = - wallDepth1.position.x
-  wallDepth1.position.z = wallDepth2.position.z = (wallWidth2.position.z / 2) //+ wallWidth1.geometry.parameters.depth/2
-
-  //adjusting positions when scaling depth
-  wallDepth1.position.z = wallDepth2.position.z = 0 //reset position of origin to zero as per Grok's advice - means not scaled by disproportionate amount to one side
-
-  //wallWidth.position.z
-  console.log(wallDepth1.geometry.parameters.depth)
-  wallWidth1.position.z = 2.5 - 1 * ((wallDepth1Decoy.geometry.parameters.depth / 2) * wallDepth1Decoy.scale.z) + wallWidth1.geometry.parameters.depth / 2
-  
-  console.log(wallWidth1.position.z)
-
-  addDoor()
-
+  //toggles window on and off
+  toggleWindow1()
+  toggleWindow2()
+  toggleWindow3()
+  //toggles door on and off
+  toggleDoor()
 
   updatePrism() //load function which updates apex roof
 
   updateRoof()
 
-  windowAddition() //load window addition function
-
   updateFloor() //load function which update floor height
 
-
   renderer.render(scene, camera);
+
+  //console.log(csgEvaluator)
 
 }
 
