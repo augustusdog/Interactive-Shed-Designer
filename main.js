@@ -404,36 +404,40 @@ var folder3 = gui.addFolder("3. Select Roof Type")
 var folder4 = gui.addFolder("4. Select Colours")
 var folder5 = gui.addFolder("5. Misc Stuff - sort tomorow")
 
+var folder21 = folder2.addFolder("Edit Window 1 Parameters")
+var folder22 = folder2.addFolder("Edit Window 2 Parameters")
+var folder23 = folder2.addFolder("Edit Window 3 Parameters")
+var folder24 = folder2.addFolder("Edit Door Parameters")
+
 folder1.add(wallWidth1Decoy.scale, "x", 4, 10).name('Shed Width (Metres)')
 folder1.add(wallWidth1Decoy.scale, "y", 1.5, 2.5).name('Shed Height (Metres)')
 folder1.add(wallDepth1Decoy.scale, "z", 4, 10).name('Shed Depth (Metres)')
 
 folder2.add(windowParams, 'addWindow1').name('Add Window 1')
+folder21.add(interimBox.scale, "y", 0.5, 3).name('Window1 Height')
+folder21.add(interimBox.scale, "x", 0.5, 3).name('Window1 Length')
+folder21.add(windowGroup_x.position, "x", -5, 5).name("Window1 Position x")
+folder21.add(windowGroup_x.position, "y", -3, 3).name("Window1 Position y")
+
 folder2.add(windowParams, 'addWindow2').name('Add Window 2')
+folder22.add(interimBox2.scale, "y", 0.5, 3).name('Window2 Height')
+folder22.add(interimBox2.scale, "z", 0.5, 3).name('Window2 Length')
+folder22.add(windowGroup_z.position, "z", -5, 5).name("Window2 Position x")
+folder22.add(windowGroup_z.position, "y", -3, 3).name("Window2 Position y")
+
 folder2.add(windowParams, 'addWindow3').name('Add Window 3')
+folder23.add(interimBox3.scale, "y", 0.5, 3).name('Window3 Height')
+folder23.add(interimBox3.scale, "z", 0.5, 3).name('Window3 Length')
+folder23.add(windowGroup_2z.position, "z", -5, 5).name("Window3 Position x")
+folder23.add(windowGroup_2z.position, "y", -3, 3).name("Window3 Position y")
+
 folder2.add(doorParams, 'doorParam').name('Add Door')
+folder24.add(hole_door.position, "x", -5, 5).name("Door Position x")
 
 folder3.add(roofOptions, "selectedRoofOption", ["Flat", "Apex"]).onChange(roofChoice).name("Select Roof Type")
 
 folder4.addColor(colorParams, 'colorWall').name('Colour of Walls').onChange(updateColorWalls);
 folder4.addColor(colorParams, 'colorRoof').name('Colour of Roof').onChange(updateColorRoof);
-
-folder5.add(interimBox.scale, "y", 0.5, 1).name('Window1 Height')
-folder5.add(interimBox.scale, "x", 0.5, 2).name('Window1 Length')
-folder5.add(windowGroup_x.position, "x", -wallWidth1.geometry.parameters.width/2 + hole_x.geometry.parameters.width/2, wallWidth1.geometry.parameters.width/2 - hole_x.geometry.parameters.width/2).name("Window1 Position x")
-folder5.add(windowGroup_x.position, "y", -wallWidth1.geometry.parameters.height/2 + hole_x.geometry.parameters.height/2, wallWidth1.geometry.parameters.height/2 - hole_x.geometry.parameters.height/2).name("Window1 Position y")
-
-folder5.add(interimBox2.scale, "y", 0.5, 1).name('Window2 Height')
-folder5.add(interimBox2.scale, "z", 0.5, 2).name('Window2 Length')
-
-folder5.add(windowGroup_z.position, "z", -wallDepth1.geometry.parameters.depth/2 + hole_z.geometry.parameters.depth, wallDepth1.geometry.parameters.depth/2 - hole_z.geometry.parameters.depth).name("Window 2 Position x")
-folder5.add(windowGroup_z.position, "y", -wallWidth1.geometry.parameters.height/2 + hole_x.geometry.parameters.height/2, wallWidth1.geometry.parameters.height/2 - hole_x.geometry.parameters.height/2).name("Window2 Position y")
-
-folder5.add(interimBox3.scale, "y", 0.5, 1).name('Window3 Height')
-folder5.add(interimBox3.scale, "z", 0.5, 2).name('Window3 Length')
-
-folder5.add(windowGroup_2z.position, "z", -wallDepth1.geometry.parameters.depth/2 + hole_z.geometry.parameters.depth, wallDepth1.geometry.parameters.depth/2 - hole_z.geometry.parameters.depth).name("Window 3 Position x")
-folder5.add(windowGroup_2z.position, "y", -wallWidth1.geometry.parameters.height/2 + hole_x.geometry.parameters.height/2, wallWidth1.geometry.parameters.height/2 - hole_x.geometry.parameters.height/2).name("Window3 Position y")
 
 ///////////////////////Render function//////////////////////////////////////
 //ANIMATE FUNCTION
@@ -708,6 +712,10 @@ function animate(){
   updatePrism() //load function which updates apex roof
 
   updateFloor() //load function which update floor height
+
+  updateWindow1_scale()
+  updateWindow2_scale()
+  updateWindow3_scale()
 
   renderer.render(scene, camera);
 
