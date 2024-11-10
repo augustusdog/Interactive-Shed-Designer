@@ -486,21 +486,23 @@ function updateGeometries(){
     wallWidth2.updateMatrixWorld(true)
     wallDepth1.updateMatrixWorld(true)
     wallDepth2.updateMatrixWorld(true)
-
-    //adjust positions based on new dimensions:
-    wallDepth1.position.x = (wallWidth1.geometry.parameters.width / 2) * wallWidth1Decoy.scale.x + wallDepth1.geometry.parameters.width / 2
-    wallDepth2.position.x = - wallDepth1.position.x
-    wallDepth1.position.z = wallDepth2.position.z = (wallWidth2.position.z / 2) //+ wallWidth1.geometry.parameters.depth/2
-
-    wallDepth1.position.x = (wallWidth1Decoy.geometry.parameters.width / 2) * wallWidth1Decoy.scale.x + wallDepth1.geometry.parameters.width / 2
-    wallDepth2.position.x = - wallDepth1.position.x
-    wallDepth1.position.z = wallDepth2.position.z = (wallWidth2.position.z / 2) //+ wallWidth1.geometry.parameters.depth/2
-
-    wallWidth1.position.z =  wallDepth1.geometry.parameters.depth / 2 - wallWidth1.geometry.parameters.depth / 2//2.5 - 1 * ((wallDepth1Decoy.geometry.parameters.depth / 2) * wallDepth1Decoy.scale.z) + wallWidth1.geometry.parameters.depth / 2
-    wallWidth2.position.z = - 1 * wallWidth1.position.z
   
-    wallDepth1.position.z = wallDepth2.position.z = 0
+}
+
+function updatePositions(){
+      //adjust positions based on new dimensions:
+      wallDepth1.position.x = (wallWidth1.geometry.parameters.width / 2) * wallWidth1Decoy.scale.x + wallDepth1.geometry.parameters.width / 2
+      wallDepth2.position.x = - wallDepth1.position.x
+      wallDepth1.position.z = wallDepth2.position.z = (wallWidth2.position.z / 2) //+ wallWidth1.geometry.parameters.depth/2
   
+      wallDepth1.position.x = (wallWidth1Decoy.geometry.parameters.width / 2) * wallWidth1Decoy.scale.x + wallDepth1.geometry.parameters.width / 2
+      wallDepth2.position.x = - wallDepth1.position.x
+      wallDepth1.position.z = wallDepth2.position.z = (wallWidth2.position.z / 2) //+ wallWidth1.geometry.parameters.depth/2
+  
+      wallWidth1.position.z =  wallDepth1.geometry.parameters.depth / 2 - wallWidth1.geometry.parameters.depth / 2//2.5 - 1 * ((wallDepth1Decoy.geometry.parameters.depth / 2) * wallDepth1Decoy.scale.z) + wallWidth1.geometry.parameters.depth / 2
+      wallWidth2.position.z = - 1 * wallWidth1.position.z
+    
+      wallDepth1.position.z = wallDepth2.position.z = 0
 }
 
 let newGeometry, result, csgEvaluator2
@@ -511,25 +513,28 @@ function toggleWindow1(){
 
     scene.remove(wallWidth1)
 
-    wallWidth1.updateMatrix(true)
+    // wallWidth1.updateMatrix(true)
     wallWidth1.add(windowGroup_x)
-    wallWidth1.updateMatrixWorld(true)
+    // wallWidth1.updateMatrixWorld(true)
 
-    csgEvaluator2 = new Evaluator()
-    csgEvaluator2.attributes = ['position', 'normal']
-    csgEvaluator2.useGroups = false
+    //translate position to starting position prior to transform (else it seems to error out)
+    wallWidth1.position.z = 3
 
-    if (scene.getObjectByName("result")){
+    if (result){
+      console.log("reaches this point")
       scene.remove(result)
       result.geometry.dispose()
       result.material.dispose()
-      result.parent.remove(result)
       result.updateMatrixWorld(true)
     }
 
-    result = csgEvaluator2.evaluateHierarchy(wallWidth1)
+    //compute CSG transformation
+    result = csgEvaluator.evaluateHierarchy(wallWidth1)
     result.updateMatrixWorld(true)
     scene.add(result)
+
+    //set position of the result mesh
+    result.position.z =  -3.5 +  6 * wallDepth1Decoy.scale.z / 6
 
     wallWidth1.geometry.dispose()
     wallWidth1.updateMatrixWorld(true)
@@ -538,11 +543,10 @@ function toggleWindow1(){
     wallWidth1.updateMatrixWorld()
     scene.add(wallWidth1)
 
-    if (scene.getObjectByName("result")){
+    if (result){
       scene.remove(result)
       result.geometry.dispose()
       result.material.dispose()
-      result.parent.remove(result)
       result.updateMatrixWorld(true)
     }
 
@@ -557,25 +561,23 @@ function toggleWindow2(){
 
     scene.remove(wallDepth1)
 
-    wallDepth1.updateMatrix(true)
     wallDepth1.add(windowGroup_z)
-    wallDepth1.updateMatrixWorld(true)
 
-    csgEvaluator2 = new Evaluator()
-    csgEvaluator2.attributes = ['position', 'normal']
-    csgEvaluator2.useGroups = false
+    //translate position to starting position prior to transform (else it seems to error out)
+    wallDepth1.position.x = 3
 
-    if (scene.getObjectByName("Depth1result")){
+    if (Depth1result){
       scene.remove(Depth1result)
       Depth1result.geometry.dispose()
       Depth1result.material.dispose()
-      Depth1result.parent.remove(Depth1result)
       Depth1result.updateMatrixWorld(true)
     }
 
-    Depth1result = csgEvaluator2.evaluateHierarchy(wallDepth1)
+    Depth1result = csgEvaluator.evaluateHierarchy(wallDepth1)
     Depth1result.updateMatrixWorld(true)
     scene.add(Depth1result)
+
+    Depth1result.position.x = -3 + (wallWidth1Decoy.geometry.parameters.width / 2) * wallWidth1Decoy.scale.x + wallDepth1.geometry.parameters.width / 2
 
     wallDepth1.geometry.dispose()
     wallDepth1.updateMatrixWorld(true)
@@ -584,14 +586,12 @@ function toggleWindow2(){
     wallDepth1.updateMatrixWorld()
     scene.add(wallDepth1)
 
-    if (scene.getObjectByName("Depth1result")){
+    if (Depth1result){
       scene.remove(Depth1result)
       Depth1result.geometry.dispose()
       Depth1result.material.dispose()
-      Depth1result.parent.remove(Depth1result)
       Depth1result.updateMatrixWorld(true)
     }
-
   }
 }
 
@@ -603,38 +603,36 @@ function toggleWindow3(){
 
     scene.remove(wallDepth2)
 
-    wallDepth2.updateMatrix(true)
     wallDepth2.add(windowGroup_2z)
-    wallDepth2.updateMatrixWorld(true)
 
-    csgEvaluator2 = new Evaluator()
-    csgEvaluator2.attributes = ['position', 'normal']
-    csgEvaluator2.useGroups = false
+    //translate poisition to starting position prior to transform (else it seems to error out)
+    wallDepth2.position.x = 3
 
-    if (scene.getObjectByName("Depth2result")){
+    if (Depth2result){
       scene.remove(Depth2result)
       Depth2result.geometry.dispose()
       Depth2result.material.dispose()
-      Depth2result.parent.remove(Depth2result)
       Depth2result.updateMatrixWorld(true)
     }
 
-    Depth2result = csgEvaluator2.evaluateHierarchy(wallDepth2)
+    Depth2result = csgEvaluator.evaluateHierarchy(wallDepth2)
     Depth2result.updateMatrixWorld(true)
     scene.add(Depth2result)
+
+    Depth2result.position.x = - 4 - (wallWidth1Decoy.geometry.parameters.width / 2) * wallWidth1Decoy.scale.x + wallDepth1.geometry.parameters.width / 2
 
     wallDepth2.geometry.dispose()
     wallDepth2.updateMatrixWorld(true)
 
   }else{
-    wallDepth2.updateMatrixWorld()
+
+    wallDepth2.updateMatrixWorld(true)
     scene.add(wallDepth2)
 
-    if (scene.getObjectByName("Depth2result")){
+    if (Depth2result){
       scene.remove(Depth2result)
       Depth2result.geometry.dispose()
       Depth2result.material.dispose()
-      Depth2result.parent.remove(Depth2result)
       Depth2result.updateMatrixWorld(true)
     }
 
@@ -661,11 +659,7 @@ function toggleDoor(){
       door_side.updateMatrixWorld(true)
     }
 
-    csgEvaluator2 = new Evaluator()
-    csgEvaluator2.attributes = ['position', 'normal']
-    csgEvaluator2.useGroups = false
-
-    door_side = csgEvaluator2.evaluateHierarchy(wallWidth2)
+    door_side = csgEvaluator.evaluateHierarchy(wallWidth2)
     door_side.updateMatrixWorld(true)
     scene.add(door_side)
 
@@ -696,6 +690,7 @@ function animate(){
   controls.update();
 
   UpdateMajorGeoms()
+  updatePositions()
 
   //toggles window on and off
   toggleWindow1()
