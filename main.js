@@ -291,9 +291,9 @@ function roofChoice(){
 }
 
 function updatePrism() {
-  const width = ((wallWidth1Decoy.scale.x / 6) * wallWidth1.geometry.parameters.width + 2*wallDepth1.geometry.parameters.width)/2;
-  const height = ((wallWidth1Decoy.scale.y/2) * wallWidth1.geometry.parameters.height)/2;
-  const depth = ((wallDepth1Decoy.scale.z / 6) * wallDepth2.geometry.parameters.depth)/2;
+  const width = (wallWidth1Decoy.scale.x * wallWidth1Decoy.geometry.parameters.width + 2*wallDepth1.geometry.parameters.width)/2;
+  const height = (wallWidth1Decoy.scale.y * wallWidth1Decoy.geometry.parameters.height)/2;
+  const depth = (wallDepth1Decoy.scale.z * wallDepth1Decoy.geometry.parameters.depth)/2;
 
   // Update vertex positions here using `width`, `height`, and `depth`.
   // For example, for the first vertex of the front triangle:
