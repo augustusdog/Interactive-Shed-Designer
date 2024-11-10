@@ -188,7 +188,7 @@ let flatRoofGeom, flatRoof
 flatRoofGeom = new THREE.BoxGeometry((wallWidth1.geometry.parameters.width * wallWidth1Decoy.scale.x) + (12 / wallWidth1Decoy.scale.x), 1, wallDepth1.geometry.parameters.depth * wallDepth1Decoy.scale.z)
 flatRoof = new THREE.Mesh(flatRoofGeom, tilesMaterial)
 
-flatRoof.position.y = wallWidth1.geometry.parameters.depth/2 + wallWidth1.geometry.parameters.height / 2
+flatRoof.position.y = (1.5 * wallDepth1Decoy.scale.y / 2) + flatRoofGeom.parameters.height
 
 
 scene.add(flatRoof)
@@ -271,12 +271,12 @@ const endBits = new THREE.Mesh(geometry3, tilesMaterial)
 
 //Functions
 
-function updateRoof(){
+// function updateRoof(){
 
-  flatRoof.scale.x = wallWidth1Decoy.scale.x / 6
-  flatRoof.scale.z = wallDepth1Decoy.scale.z / 6
-  flatRoof.position.y = flatRoof.geometry.parameters.height/2 + (wallWidth1.scale.y * wallWidth1.geometry.parameters.height/2)
-}
+//   flatRoof.scale.x = wallWidth1Decoy.scale.x / 6
+//   flatRoof.scale.z = wallDepth1Decoy.scale.z / 6
+//   flatRoof.position.y = flatRoof.geometry.parameters.height/2 + (wallWidth1.scale.y * wallWidth1.geometry.parameters.height/2)
+// }
 
 function roofChoice(){
   if (roofOptions.selectedRoofOption == "Flat"){
@@ -468,12 +468,14 @@ function updateGeometries(){
     wallWidth2.geometry.dispose()
     wallDepth1.geometry.dispose()
     wallDepth2.geometry.dispose()
+    flatRoof.geometry.dispose()
 
     //create new geometries
     wallWidth1.geometry = new THREE.BoxGeometry(newWidth, newHeight, 1)
     wallWidth2.geometry = new THREE.BoxGeometry(newWidth, newHeight, 1)
     wallDepth1.geometry = new THREE.BoxGeometry(1, newHeight, newDepth)
     wallDepth2.geometry = new THREE.BoxGeometry(1, newHeight, newDepth)
+    flatRoof.geometry = new THREE.BoxGeometry(newWidth + 2, 1, newDepth)
 
     //reset scale to 1
     wallWidth1.scale.set(1,1,1)
@@ -503,6 +505,9 @@ function updatePositions(){
       wallWidth2.position.z = - 1 * wallWidth1.position.z
     
       wallDepth1.position.z = wallDepth2.position.z = 0
+
+      flatRoof.position.y = (2 * (wallWidth1Decoy.scale.y / 2)) + flatRoofGeom.parameters.height / 2
+      
 }
 
 let newGeometry, result, csgEvaluator2
@@ -651,17 +656,18 @@ function toggleDoor(){
     wallWidth2.add(hole_door)
     wallWidth2.updateMatrixWorld(true)
 
-    if (scene.getObjectByName("door_side")){
+    if (door_side){
       scene.remove(door_side)
       door_side.geometry.dispose()
       door_side.material.dispose()
-      door_side.parent.remove(door_side)
       door_side.updateMatrixWorld(true)
     }
 
     door_side = csgEvaluator.evaluateHierarchy(wallWidth2)
     door_side.updateMatrixWorld(true)
     scene.add(door_side)
+
+    //door_side.position.z =  - 1 * (6 * wallDepth1Decoy.scale.z )
 
     wallWidth2.geometry.dispose()
     wallWidth2.updateMatrixWorld(true)
@@ -700,8 +706,6 @@ function animate(){
   toggleDoor()
 
   updatePrism() //load function which updates apex roof
-
-  updateRoof()
 
   updateFloor() //load function which update floor height
 
