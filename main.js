@@ -37,6 +37,7 @@ const gardenTexture = new THREE.TextureLoader().load('sky.jpg');
 const brickTexture = new THREE.TextureLoader().load('brick.jpg');
 const tilesTexture = new THREE.TextureLoader().load("tiles.jpg");
 const grassTexture = new THREE.TextureLoader().load("grass.jpeg")
+const slateTexture = new THREE.TextureLoader().load("slate.jpg")
 grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping
 grassTexture.repeat.set(10,10)
 
@@ -44,7 +45,8 @@ grassTexture.repeat.set(10,10)
 const brickMaterial = new THREE.MeshBasicMaterial({color: 0x000000});
 const floorMaterial = new THREE.MeshBasicMaterial({color: 0x3f9b0b, map: grassTexture});
 const tilesMaterial_with_texture = new THREE.MeshBasicMaterial({ map: tilesTexture});
-const tilesMaterial = new THREE.MeshBasicMaterial();
+const tilesMaterial = new THREE.MeshBasicMaterial({ map: tilesTexture});
+const slateMaterial = new THREE.MeshBasicMaterial({ map: slateTexture});
 const windowMaterial = new THREE.MeshBasicMaterial({color: 0xffffff});
 const brushMat = new THREE.MeshBasicMaterial({color: 0xffc400})
 tilesMaterial.side = THREE.DoubleSide;
@@ -237,9 +239,14 @@ const indices = [
     0, 1, 2,
     2, 3, 1
 ];
+// const indices_endBits = [
+//   0, 1, 2,
+//   3, 4, 5
+// ]
+
 const indices_endBits = [
   0, 1, 2,
-  3, 4, 5
+  5, 4, 3
 ]
 // UV coordinate mapping for roof slope 1 and 2
 const uvs = new Float32Array([
@@ -287,6 +294,22 @@ function roofChoice(){
   else{
     scene.remove(flatRoof)
     scene.add(slope1, slope2, endBits)
+  }
+}
+
+function roofMaterialChoice(){
+  if (roofOptions.material == "Tiles"){
+    flatRoof.material = tilesMaterial
+    slope1.material = tilesMaterial
+    slope2.material = tilesMaterial
+  }else if (roofOptions.material == "Slate"){
+    flatRoof.material = slateMaterial
+    slope1.material = slateMaterial
+    slope2.material = slateMaterial
+  }else{
+    flatRoof.material = brickMaterial
+    slope1.material = brickMaterial
+    slope2.material = brickMaterial
   }
 }
 
@@ -358,7 +381,8 @@ function updateWindow1_scale(){
 let lastScale_x, lastScale_y, lastScale_z
 
 const roofOptions = {
-  selectedRoofOption: "Flat"
+  selectedRoofOption: "Flat",
+  material: "Tiles"
 }
 
 // Function to update the wall colour
@@ -434,6 +458,7 @@ folder2.add(doorParams, 'doorParam').name('Add Door')
 folder24.add(hole_door.position, "x", -5, 5).name("Door Position x")
 
 folder3.add(roofOptions, "selectedRoofOption", ["Flat", "Apex"]).onChange(roofChoice).name("Select Roof Type")
+folder3.add(roofOptions, "material", ["Tiles", "Slate", "Plastic"]).onChange(roofMaterialChoice).name("Select Roof Material")
 
 folder4.addColor(colorParams, 'colorWall').name('Colour of Walls').onChange(updateColorWalls);
 folder4.addColor(colorParams, 'colorRoof').name('Colour of Roof').onChange(updateColorRoof);
