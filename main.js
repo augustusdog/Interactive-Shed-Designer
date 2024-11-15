@@ -43,10 +43,12 @@ grassTexture.repeat.set(10,10)
 
 //Materials
 const brickMaterial = new THREE.MeshBasicMaterial({color: 0x000000});
+brickMaterial.side = THREE.DoubleSide
 const floorMaterial = new THREE.MeshBasicMaterial({color: 0x3f9b0b, map: grassTexture});
 const tilesMaterial_with_texture = new THREE.MeshBasicMaterial({ map: tilesTexture});
 const tilesMaterial = new THREE.MeshBasicMaterial({ map: tilesTexture});
 const slateMaterial = new THREE.MeshBasicMaterial({ map: slateTexture});
+slateMaterial.side = THREE.DoubleSide
 const windowMaterial = new THREE.MeshBasicMaterial({color: 0xffffff});
 const brushMat = new THREE.MeshBasicMaterial({color: 0xffc400})
 tilesMaterial.side = THREE.DoubleSide;
@@ -57,7 +59,7 @@ scene.background = gardenTexture
 let shedDimensions = {
     width: 8, 
     height: 2, 
-    depth: 14, 
+    depth: 8, 
     window1Enabled: true,
     window1Scale_x: 1,
     window1Scale_y: 1,
@@ -75,8 +77,8 @@ let shedDimensions = {
     window3Position_y: 0,
     doorEnabled: true,
     doorPosition_x: 0,
-    roof: "apex",
-    roofMaterial: "Tiles"
+    roof: "Apex",
+    roofMaterial: "Slate"
 }
 
 let widthPresets = {
@@ -172,29 +174,37 @@ folder23.add(shedDimensions, "window3Position_y", -0.5, 0.5, 0.2).onFinishChange
 
 folder24.add(shedDimensions, "doorPosition_x", -1.5, 1.5, 0.5).onChange(rebuildBuilding).name("Door Position x")
 
-folder3.add(shedDimensions, "roof", ["flat", "apex"]).onChange(rebuildBuilding).name("Select Roof Type")
-// folder3.add(shedDimensions, "roofMaterial", ["Tiles", "Slate", "Plastic"]).onChange(roofMaterialChoice).name("Select Roof Material")
+folder3.add(shedDimensions, "roof", ["Flat", "Apex"]).onChange(rebuildBuilding).name("Select Roof Type")
+folder3.add(shedDimensions, "roofMaterial", ["Tiles", "Slate", "Plastic"]).onChange(rebuildBuilding).name("Select Roof Material")
 
 // folder4.addColor(colorParams, 'colorWall').name('Colour of Walls').onChange(updateColorWalls);
 // folder4.addColor(colorParams, 'colorRoof').name('Colour of Roof').onChange(updateColorRoof);
 
-// function roofMaterialChoice(){
-//   if (shedDimensions.roofMaterial == "Tiles"){
-//     flatRoof.material = tilesMaterial
-//     slope1.material = tilesMaterial
-//     slope2.material = tilesMaterial
-//   }else if (shedDimensions.roofMaterial == "Slate"){
-//     flatRoof.material = slateMaterial
-//     slope1.material = slateMaterial
-//     slope2.material = slateMaterial
-//   }else{
-//     flatRoof.material = brickMaterial
-//     slope1.material = brickMaterial
-//     slope2.material = brickMaterial
-//   }
+function roofMaterialChoice_apex(endBits, slope1, slope2, tilesMaterial, slateMaterial, brickMaterial){
+  if (shedDimensions.roofMaterial === "Tiles"){
+    endBits.material = tilesMaterial
+    slope1.material = tilesMaterial
+    slope2.material = tilesMaterial
+  }else if (shedDimensions.roofMaterial === "Slate"){
+    endBits.material = slateMaterial
+    slope1.material = slateMaterial
+    slope2.material = slateMaterial
+  }else{
+    endBits.material = brickMaterial
+    slope1.material = brickMaterial
+    slope2.material = brickMaterial
+  }
+}
 
-//   console.log(shedDimensions.roofMaterial)
-// }
+function roofMaterialChoice_flatRoof(flatRoof, tilesMaterial, slateMaterial, brickMaterial){
+  if (shedDimensions.roofMaterial === "Tiles"){
+    flatRoof.material = tilesMaterial
+  }else if (shedDimensions.roofMaterial === "Slate"){
+    flatRoof.material = slateMaterial
+  }else{
+    flatRoof.material = brickMaterial
+  }
+}
 
 function buildApexRoof(){
 
@@ -461,15 +471,18 @@ function rebuildBuilding(){
     }
 
     //sort roof
-    if (shedDimensions.roof == "flat"){
+    if (shedDimensions.roof == "Flat"){
       let flatRoof = new THREE.Mesh(new THREE.BoxGeometry(shedDimensions.width + 2 * wallThickness, wallThickness, shedDimensions.depth), tilesMaterial)
       flatRoof.position.y = shedDimensions.height / 2 + wallThickness/2
+      roofMaterialChoice_flatRoof(flatRoof, tilesMaterial, slateMaterial, brickMaterial)
       shedGroup.add(flatRoof)
-    }else if (shedDimensions.roof == "apex"){
+    }else if (shedDimensions.roof == "Apex"){
       const {slope1, slope2, endBits} = buildApexRoof()
+      roofMaterialChoice_apex(endBits, slope1, slope2, tilesMaterial, slateMaterial, brickMaterial)
+      console.log("end bits", endBits)
+      //roofMaterialChoice_apex()
       shedGroup.add(slope1, slope2, endBits)
     }
-
 
     scene.add(shedGroup)
 
