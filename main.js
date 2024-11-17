@@ -40,6 +40,7 @@ const grassTexture = new THREE.TextureLoader().load("grass.jpeg")
 const slateTexture = new THREE.TextureLoader().load("slate.jpg")
 const feltTexture = new THREE.TextureLoader().load("felt.jpg")
 const shedTexture = new THREE.TextureLoader().load("shed.jpg")
+const doorTexture = new THREE.TextureLoader().load("door.jpg")
 
 shedTexture.wrapS = shedTexture.wrapT = THREE.RepeatWrapping
 shedTexture.repeat.set(2,2)
@@ -69,6 +70,7 @@ const brushMat = new THREE.MeshBasicMaterial({color: 0xffc400})
 tilesMaterial.side = THREE.DoubleSide;
 const feltMaterial = new THREE.MeshBasicMaterial({map: feltTexture})
 feltMaterial.side = THREE.DoubleSide
+const doorMaterial = new THREE.MeshBasicMaterial({ map: doorTexture })
 
 //Background
 scene.background = gardenTexture
@@ -343,8 +345,10 @@ function rebuildBuilding(){
     //define new wall geometries
     //in x plane
 
-    let hole_door = new Operation(new THREE.BoxGeometry(1.6, 3.6, wallThickness), shedMaterial);
+    let hole_door = new Operation(new THREE.BoxGeometry(1.2, 2.0, wallThickness), shedMaterial);
     hole_door.operation = SUBTRACTION;
+
+    let tempDoor = new THREE.Mesh( hole_door.geometry, doorMaterial )
 
     let frame_x = new Operation( new THREE.BoxGeometry( 2, 1.75, wallThickness), shedMaterial );
     frame_x.operation = ADDITION;
@@ -420,18 +424,18 @@ function rebuildBuilding(){
     console.log("shedGroup children phase 2", shedGroup.children)
     //define door side
     let wallWidth2 = new Operation( wallWidthGeom, shedMaterial )
-    wallWidth2.position.z = - shedDimensions.depth / 2 + wallThickness / 2
+    wallWidth2.position.z = tempDoor.position.z = - shedDimensions.depth / 2 + wallThickness / 2
 
     if (shedDimensions.doorEnabled){
 
-      hole_door.position.x = shedDimensions.doorPosition_x
+      hole_door.position.x = tempDoor.position.x = shedDimensions.doorPosition_x
       wallWidth2.add ( hole_door )
 
       //compute geometry evaluation
       let doorSide = csgEvaluator.evaluateHierarchy(wallWidth2)
       doorSide.material = shedMaterial
 
-      shedGroup.add(doorSide)
+      shedGroup.add(doorSide, tempDoor)
 
     }else{
 
