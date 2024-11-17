@@ -58,7 +58,7 @@ feltTexture.wrapS = feltTexture.wrapT = THREE.RepeatWrapping
 feltTexture.repeat.set(2,2)
 
 //Materials
-const shedMaterial = new THREE.MeshBasicMaterial({map: shedTexture});
+const shedMaterial = new THREE.MeshBasicMaterial({color: 0x3f9b0b, map: shedTexture});
 shedMaterial.side = THREE.DoubleSide
 const floorMaterial = new THREE.MeshBasicMaterial({color: 0x3f9b0b, map: grassTexture});
 const tilesMaterial_with_texture = new THREE.MeshBasicMaterial({ map: tilesTexture});
@@ -97,7 +97,8 @@ let shedDimensions = {
     doorEnabled: true,
     doorPosition_x: 0,
     roof: "Apex",
-    roofMaterial: "Slate"
+    roofMaterial: "Slate",
+    wallColour: '#ff0000'
 }
 
 let widthPresets = {
@@ -188,8 +189,11 @@ folder24.add(shedDimensions, "doorPosition_x", -1.5, 1.5, 0.5).onChange(rebuildB
 folder3.add(shedDimensions, "roof", ["Flat", "Apex"]).onChange(rebuildBuilding).name("Select Roof Type")
 folder3.add(shedDimensions, "roofMaterial", ["Tiles", "Slate", "Felt"]).onChange(rebuildBuilding).name("Select Roof Material")
 
-// folder4.addColor(colorParams, 'colorWall').name('Colour of Walls').onChange(updateColorWalls);
-// folder4.addColor(colorParams, 'colorRoof').name('Colour of Roof').onChange(updateColorRoof);
+folder4.addColor(shedDimensions, 'wallColour').name('Colour of Walls').onChange(updateWallColour)
+
+function updateWallColour(){
+  shedMaterial.color.set(shedDimensions.wallColour)
+}
 
 function roofMaterialChoice_apex(endBits, slope1, slope2, tilesMaterial, slateMaterial, feltMaterial){
   if (shedDimensions.roofMaterial === "Tiles"){
@@ -348,7 +352,7 @@ function rebuildBuilding(){
     let hole_door = new Operation(new THREE.BoxGeometry(1.2, 2.0, wallThickness), shedMaterial);
     hole_door.operation = SUBTRACTION;
 
-    let tempDoor = new THREE.Mesh( hole_door.geometry, doorMaterial )
+    let tempDoor = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.0, wallThickness + 0.2), doorMaterial )
 
     let frame_x = new Operation( new THREE.BoxGeometry( 2, 1.75, wallThickness), shedMaterial );
     frame_x.operation = ADDITION;
