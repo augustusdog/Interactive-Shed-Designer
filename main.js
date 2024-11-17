@@ -38,8 +38,19 @@ const brickTexture = new THREE.TextureLoader().load('brick.jpg');
 const tilesTexture = new THREE.TextureLoader().load("tiles.jpg");
 const grassTexture = new THREE.TextureLoader().load("grass.jpeg")
 const slateTexture = new THREE.TextureLoader().load("slate.jpg")
+const feltTexture = new THREE.TextureLoader().load("felt.jpg")
+
 grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping
 grassTexture.repeat.set(10,10)
+
+slateTexture.wrapS = slateTexture.wrapT = THREE.RepeatWrapping
+slateTexture.repeat.set(2,2)
+
+tilesTexture.wrapS = tilesTexture.wrapT = THREE.RepeatWrapping
+tilesTexture.repeat.set(2,2)
+
+feltTexture.wrapS = feltTexture.wrapT = THREE.RepeatWrapping
+feltTexture.repeat.set(2,2)
 
 //Materials
 const brickMaterial = new THREE.MeshBasicMaterial({color: 0x000000});
@@ -52,6 +63,8 @@ slateMaterial.side = THREE.DoubleSide
 const windowMaterial = new THREE.MeshBasicMaterial({color: 0xffffff});
 const brushMat = new THREE.MeshBasicMaterial({color: 0xffc400})
 tilesMaterial.side = THREE.DoubleSide;
+const feltMaterial = new THREE.MeshBasicMaterial({map: feltTexture})
+feltMaterial.side = THREE.DoubleSide
 
 //Background
 scene.background = gardenTexture
@@ -175,12 +188,12 @@ folder23.add(shedDimensions, "window3Position_y", -0.5, 0.5, 0.2).onFinishChange
 folder24.add(shedDimensions, "doorPosition_x", -1.5, 1.5, 0.5).onChange(rebuildBuilding).name("Door Position x")
 
 folder3.add(shedDimensions, "roof", ["Flat", "Apex"]).onChange(rebuildBuilding).name("Select Roof Type")
-folder3.add(shedDimensions, "roofMaterial", ["Tiles", "Slate", "Plastic"]).onChange(rebuildBuilding).name("Select Roof Material")
+folder3.add(shedDimensions, "roofMaterial", ["Tiles", "Slate", "Felt"]).onChange(rebuildBuilding).name("Select Roof Material")
 
 // folder4.addColor(colorParams, 'colorWall').name('Colour of Walls').onChange(updateColorWalls);
 // folder4.addColor(colorParams, 'colorRoof').name('Colour of Roof').onChange(updateColorRoof);
 
-function roofMaterialChoice_apex(endBits, slope1, slope2, tilesMaterial, slateMaterial, brickMaterial){
+function roofMaterialChoice_apex(endBits, slope1, slope2, tilesMaterial, slateMaterial, feltMaterial){
   if (shedDimensions.roofMaterial === "Tiles"){
     endBits.material = tilesMaterial
     slope1.material = tilesMaterial
@@ -190,19 +203,19 @@ function roofMaterialChoice_apex(endBits, slope1, slope2, tilesMaterial, slateMa
     slope1.material = slateMaterial
     slope2.material = slateMaterial
   }else{
-    endBits.material = brickMaterial
-    slope1.material = brickMaterial
-    slope2.material = brickMaterial
+    endBits.material = feltMaterial
+    slope1.material = feltMaterial
+    slope2.material = feltMaterial
   }
 }
 
-function roofMaterialChoice_flatRoof(flatRoof, tilesMaterial, slateMaterial, brickMaterial){
+function roofMaterialChoice_flatRoof(flatRoof, tilesMaterial, slateMaterial, feltMaterial){
   if (shedDimensions.roofMaterial === "Tiles"){
     flatRoof.material = tilesMaterial
   }else if (shedDimensions.roofMaterial === "Slate"){
     flatRoof.material = slateMaterial
   }else{
-    flatRoof.material = brickMaterial
+    flatRoof.material = feltMaterial
   }
 }
 
@@ -474,11 +487,11 @@ function rebuildBuilding(){
     if (shedDimensions.roof == "Flat"){
       let flatRoof = new THREE.Mesh(new THREE.BoxGeometry(shedDimensions.width + 2 * wallThickness, wallThickness, shedDimensions.depth), tilesMaterial)
       flatRoof.position.y = shedDimensions.height / 2 + wallThickness/2
-      roofMaterialChoice_flatRoof(flatRoof, tilesMaterial, slateMaterial, brickMaterial)
+      roofMaterialChoice_flatRoof(flatRoof, tilesMaterial, slateMaterial, feltMaterial)
       shedGroup.add(flatRoof)
     }else if (shedDimensions.roof == "Apex"){
       const {slope1, slope2, endBits} = buildApexRoof()
-      roofMaterialChoice_apex(endBits, slope1, slope2, tilesMaterial, slateMaterial, brickMaterial)
+      roofMaterialChoice_apex(endBits, slope1, slope2, tilesMaterial, slateMaterial, feltMaterial)
       console.log("end bits", endBits)
       //roofMaterialChoice_apex()
       shedGroup.add(slope1, slope2, endBits)
