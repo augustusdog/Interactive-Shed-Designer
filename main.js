@@ -39,6 +39,10 @@ const tilesTexture = new THREE.TextureLoader().load("tiles.jpg");
 const grassTexture = new THREE.TextureLoader().load("grass.jpeg")
 const slateTexture = new THREE.TextureLoader().load("slate.jpg")
 const feltTexture = new THREE.TextureLoader().load("felt.jpg")
+const shedTexture = new THREE.TextureLoader().load("shed.jpg")
+
+shedTexture.wrapS = shedTexture.wrapT = THREE.RepeatWrapping
+shedTexture.repeat.set(2,2)
 
 grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping
 grassTexture.repeat.set(10,10)
@@ -53,8 +57,8 @@ feltTexture.wrapS = feltTexture.wrapT = THREE.RepeatWrapping
 feltTexture.repeat.set(2,2)
 
 //Materials
-const brickMaterial = new THREE.MeshBasicMaterial({color: 0x000000});
-brickMaterial.side = THREE.DoubleSide
+const shedMaterial = new THREE.MeshBasicMaterial({map: shedTexture});
+shedMaterial.side = THREE.DoubleSide
 const floorMaterial = new THREE.MeshBasicMaterial({color: 0x3f9b0b, map: grassTexture});
 const tilesMaterial_with_texture = new THREE.MeshBasicMaterial({ map: tilesTexture});
 const tilesMaterial = new THREE.MeshBasicMaterial({ map: tilesTexture});
@@ -108,14 +112,6 @@ let csgEvaluator;
 csgEvaluator = new Evaluator();
 csgEvaluator.attributes = [ 'position', 'normal' ];
 csgEvaluator.useGroups = false;
-
-
-let gridMat = brickMaterial.clone()
-gridMat.opacity = 1;
-gridMat.transparent = false;
-gridMat.depthWrite = true;
-gridMat.polygonOffsetFactor = 1
-gridMat.polygonOffsetUnits = 1;
 
 //add floor
 const floor2_geom = new THREE.BufferGeometry()
@@ -347,50 +343,50 @@ function rebuildBuilding(){
     //define new wall geometries
     //in x plane
 
-    let hole_door = new Operation(new THREE.BoxGeometry(1.6, 3.6, wallThickness), brickMaterial);
+    let hole_door = new Operation(new THREE.BoxGeometry(1.6, 3.6, wallThickness), shedMaterial);
     hole_door.operation = SUBTRACTION;
 
-    let frame_x = new Operation( new THREE.BoxGeometry( 2, 1.75, wallThickness), brickMaterial );
+    let frame_x = new Operation( new THREE.BoxGeometry( 2, 1.75, wallThickness), shedMaterial );
     frame_x.operation = ADDITION;
 
-    let hole_x = new Operation( new THREE.BoxGeometry( 1.9, 1.65, wallThickness), brickMaterial );
+    let hole_x = new Operation( new THREE.BoxGeometry( 1.9, 1.65, wallThickness), shedMaterial );
     hole_x.operation = SUBTRACTION;
 
-    let bar1_x = new Operation( new THREE.BoxGeometry( 2, 0.1, 0.1 ), brickMaterial);
+    let bar1_x = new Operation( new THREE.BoxGeometry( 2, 0.1, 0.1 ), shedMaterial);
     bar1_x.operation = ADDITION;
 
-    let bar2_x = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), brickMaterial);
+    let bar2_x = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), shedMaterial);
     bar2_x.operation = ADDITION;
 
     let windowGroup_x = new OperationGroup();
     windowGroup_x.add(hole_x, frame_x, hole_x, bar1_x, bar2_x);
 
     //in z plane
-    let frame_z = new Operation( new THREE.BoxGeometry( wallThickness , 1.75, 2 ), brickMaterial );
+    let frame_z = new Operation( new THREE.BoxGeometry( wallThickness , 1.75, 2 ), shedMaterial );
     frame_z.operation = ADDITION;
 
-    let hole_z = new Operation( new THREE.BoxGeometry( wallThickness, 1.65, 1.9 ), brickMaterial );
+    let hole_z = new Operation( new THREE.BoxGeometry( wallThickness, 1.65, 1.9 ), shedMaterial );
     hole_z.operation = SUBTRACTION;
 
-    let bar1_z = new Operation( new THREE.BoxGeometry( 0.1, 0.1, 2 ), brickMaterial );
+    let bar1_z = new Operation( new THREE.BoxGeometry( 0.1, 0.1, 2 ), shedMaterial );
     bar1_z.operation = ADDITION;
 
-    let bar2_z = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), brickMaterial );
+    let bar2_z = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), shedMaterial );
     bar2_z.operation = ADDITION;
 
     let windowGroup_z = new OperationGroup();
     windowGroup_z.add(frame_z, hole_z, bar1_z, bar2_z );
 
-    let frame_2z = new Operation( new THREE.BoxGeometry( wallThickness , 1.75, 2 ), brickMaterial );
+    let frame_2z = new Operation( new THREE.BoxGeometry( wallThickness , 1.75, 2 ), shedMaterial );
     frame_2z.operation = ADDITION;
 
-    let hole_2z = new Operation( new THREE.BoxGeometry( wallThickness, 1.65, 1.9 ), brickMaterial );
+    let hole_2z = new Operation( new THREE.BoxGeometry( wallThickness, 1.65, 1.9 ), shedMaterial );
     hole_2z.operation = SUBTRACTION;
 
-    let bar1_2z = new Operation( new THREE.BoxGeometry( 0.1, 0.1, 2 ), brickMaterial );
+    let bar1_2z = new Operation( new THREE.BoxGeometry( 0.1, 0.1, 2 ), shedMaterial );
     bar1_2z.operation = ADDITION;
 
-    let bar2_2z = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), brickMaterial );
+    let bar2_2z = new Operation( new THREE.BoxGeometry( 0.1, 2, 0.1 ), shedMaterial );
     bar2_2z.operation = ADDITION;
 
     let windowGroup_2z = new OperationGroup();
@@ -400,7 +396,7 @@ function rebuildBuilding(){
     let wallDepthGeom = new THREE.BoxGeometry( wallThickness, shedDimensions.height, shedDimensions.depth )
 
     //define first window side
-    let wallWidth1 = new Operation( wallWidthGeom, brickMaterial )
+    let wallWidth1 = new Operation( wallWidthGeom, shedMaterial )
     wallWidth1.position.z = shedDimensions.depth / 2 - wallThickness / 2
 
     if (shedDimensions.window1Enabled){
@@ -413,7 +409,7 @@ function rebuildBuilding(){
 
       //compute geometry evaluation
       let wallSide = csgEvaluator.evaluateHierarchy(wallWidth1)
-      wallSide.material = brickMaterial
+      wallSide.material = shedMaterial
       
       shedGroup.add(wallSide)
       
@@ -423,7 +419,7 @@ function rebuildBuilding(){
 
     console.log("shedGroup children phase 2", shedGroup.children)
     //define door side
-    let wallWidth2 = new Operation( wallWidthGeom, brickMaterial )
+    let wallWidth2 = new Operation( wallWidthGeom, shedMaterial )
     wallWidth2.position.z = - shedDimensions.depth / 2 + wallThickness / 2
 
     if (shedDimensions.doorEnabled){
@@ -433,7 +429,7 @@ function rebuildBuilding(){
 
       //compute geometry evaluation
       let doorSide = csgEvaluator.evaluateHierarchy(wallWidth2)
-      doorSide.material = brickMaterial
+      doorSide.material = shedMaterial
 
       shedGroup.add(doorSide)
 
@@ -444,7 +440,7 @@ function rebuildBuilding(){
     }
 
     //define second window side
-    let wallDepth1 = new Operation( wallDepthGeom, brickMaterial )
+    let wallDepth1 = new Operation( wallDepthGeom, shedMaterial )
     wallDepth1.position.x = shedDimensions.width / 2 + wallThickness / 2
 
     if (shedDimensions.window2Enabled){
@@ -456,7 +452,7 @@ function rebuildBuilding(){
       wallDepth1.add(windowGroup_z)
       
       let wallDepthSide1 = csgEvaluator.evaluateHierarchy(wallDepth1)
-      wallDepthSide1.material = brickMaterial
+      wallDepthSide1.material = shedMaterial
 
       shedGroup.add(wallDepthSide1)
     }else{
@@ -464,7 +460,7 @@ function rebuildBuilding(){
     }
 
     //define third window side
-    let wallDepth2 = new Operation( wallDepthGeom, brickMaterial )
+    let wallDepth2 = new Operation( wallDepthGeom, shedMaterial )
     wallDepth2.position.x = - shedDimensions.width / 2 - wallThickness / 2
 
     if (shedDimensions.window3Enabled){
@@ -476,7 +472,7 @@ function rebuildBuilding(){
       wallDepth2.add(windowGroup_2z)
 
       let wallDepthSide2 = csgEvaluator.evaluateHierarchy(wallDepth2)
-      wallDepthSide2.material = brickMaterial
+      wallDepthSide2.material = shedMaterial
 
       shedGroup.add(wallDepthSide2)
     }else{
