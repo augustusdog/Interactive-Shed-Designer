@@ -151,10 +151,10 @@ scene.add(floor_v2)
 
 const gui = new dat.GUI()
 
-var folder1 = gui.addFolder("1. Select Shed Size")
-var folder2 = gui.addFolder("2. Select Window and Doors")
-var folder3 = gui.addFolder("3. Select Roof Type")
-var folder4 = gui.addFolder("4. Select Colours")
+var folder1 = gui.addFolder("Select Shed Size")
+var folder2 = gui.addFolder("Select Windows and Door")
+var folder3 = gui.addFolder("Select Roof Type and Material")
+var folder4 = gui.addFolder("Select Wall Colour")
 
 var folder21 = folder2.addFolder("Edit Window 1 Parameters")
 var folder22 = folder2.addFolder("Edit Window 2 Parameters")
