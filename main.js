@@ -420,6 +420,30 @@ function rebuildBuilding(){
       wallSide.material = shedMaterial
       
       shedGroup.add(wallSide)
+
+      let wallSide_vertices = wallSide.geometry.attributes.position.array
+      let uv = wallSide.geometry.attributes.uv
+
+      if (!uv) {
+        wallSide.geometry.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(wallSide_vertices.length / 3 * 2), 2))
+        console.log("Now has uv")
+     }
+      
+      for (let i = 0; i < wallSide_vertices.length; i += 3){
+        let x_temp = wallSide_vertices[i] + shedDimensions.width / 2;
+        let y_temp = wallSide_vertices[i + 1] + shedDimensions.height / 2;
+        let z_temp = wallSide_vertices[i + 2];
+
+        let vertexIndex = i / 3
+
+        wallSide.geometry.attributes.uv.setXY(vertexIndex, 
+                x_temp / shedDimensions.width,
+                y_temp / shedDimensions.height
+                );
+
+      }
+
+      wallSide.geometry.attributes.uv.needsUpdate = true
       
     }else{
       shedGroup.add(wallWidth1)
@@ -440,6 +464,30 @@ function rebuildBuilding(){
       doorSide.material = shedMaterial
 
       shedGroup.add(doorSide, tempDoor)
+
+      let doorSide_vertices = doorSide.geometry.attributes.position.array
+      let uv = doorSide.geometry.attributes.uv
+
+      if (!uv) {
+        doorSide.geometry.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(doorSide_vertices.length / 3 * 2), 2))
+        console.log("Now has uv")
+     }
+      
+      for (let i = 0; i < doorSide_vertices.length; i += 3){
+        let x_temp = doorSide_vertices[i] + shedDimensions.width / 2;
+        let y_temp = doorSide_vertices[i + 1] + shedDimensions.height / 2;
+        let z_temp = doorSide_vertices[i + 2];
+
+        let vertexIndex = i / 3
+
+        doorSide.geometry.attributes.uv.setXY(vertexIndex, 
+                x_temp / shedDimensions.width,
+                y_temp / shedDimensions.height
+                );
+
+      }
+
+      doorSide.geometry.attributes.uv.needsUpdate = true
 
     }else{
 
@@ -463,6 +511,31 @@ function rebuildBuilding(){
       wallDepthSide1.material = shedMaterial
 
       shedGroup.add(wallDepthSide1)
+
+      let wallDepthSide1_vertices = wallDepthSide1.geometry.attributes.position.array
+      let uv = wallDepthSide1.geometry.attributes.uv
+
+      if (!uv) {
+        wallDepthSide1.geometry.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(wallDepthSide1_vertices.length / 3 * 2), 2))
+        console.log("Now has uv")
+     }
+      
+      for (let i = 0; i < wallDepthSide1_vertices.length; i += 3){
+        let x_temp = wallDepthSide1_vertices[i] + shedDimensions.width / 2;
+        let y_temp = wallDepthSide1_vertices[i + 1] + shedDimensions.height / 2;
+        let z_temp = wallDepthSide1_vertices[i + 2];
+
+        let vertexIndex = i / 3
+
+        wallDepthSide1.geometry.attributes.uv.setXY(vertexIndex, 
+                z_temp / shedDimensions.depth,
+                y_temp / shedDimensions.height
+                );
+
+      }
+
+      wallDepthSide1.geometry.attributes.uv.needsUpdate = true
+
     }else{
       shedGroup.add(wallDepth1)
     }
@@ -483,6 +556,31 @@ function rebuildBuilding(){
       wallDepthSide2.material = shedMaterial
 
       shedGroup.add(wallDepthSide2)
+
+      let wallDepthSide2_vertices = wallDepthSide2.geometry.attributes.position.array
+      let uv = wallDepthSide2.geometry.attributes.uv
+
+      if (!uv) {
+        wallDepthSide2.geometry.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(wallDepthSide2_vertices.length / 3 * 2), 2))
+        console.log("Now has uv")
+     }
+      
+      for (let i = 0; i < wallDepthSide2_vertices.length; i += 3){
+        let x_temp = wallDepthSide2_vertices[i] + shedDimensions.width / 2;
+        let y_temp = wallDepthSide2_vertices[i + 1] + shedDimensions.height / 2;
+        let z_temp = wallDepthSide2_vertices[i + 2];
+
+        let vertexIndex = i / 3
+
+        wallDepthSide2.geometry.attributes.uv.setXY(vertexIndex, 
+                z_temp / shedDimensions.depth,
+                y_temp / shedDimensions.height
+                );
+
+      }
+
+      wallDepthSide2.geometry.attributes.uv.needsUpdate = true
+
     }else{
       shedGroup.add(wallDepth2)
     }
