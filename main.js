@@ -44,7 +44,7 @@ const shedTexture = new THREE.TextureLoader().load("shed.jpg")
 const doorTexture = new THREE.TextureLoader().load("door.jpg")
 
 shedTexture.wrapS = shedTexture.wrapT = THREE.RepeatWrapping
-shedTexture.repeat.set(2,2)
+shedTexture.repeat.set(3,3)
 
 grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping
 grassTexture.repeat.set(10,10)
@@ -350,10 +350,15 @@ function disposeGroup(group) {
 //Rebuild shed
 function rebuildBuilding(){
 
+    //adjust floor to meet shed
     vertices_floor[1] = vertices_floor[4] = vertices_floor[7] = vertices_floor[10] = - shedDimensions.height / 2
     floor2_geom.setAttribute('position', new THREE.BufferAttribute(vertices_floor, 3))
     floor2_geom.attributes.position.needsUpdate = true
 
+    //build shed floor
+    let shed_floor = new THREE.Mesh(new THREE.BoxGeometry(shedDimensions.width, 0.1, shedDimensions.depth - 2 * wallThickness), shedMaterial)
+    shed_floor.position.y = - shedDimensions.height / 2
+    scene.add(shed_floor)
 
     console.log("width", shedDimensions.width)
     console.log("height", shedDimensions.height)
