@@ -5,6 +5,7 @@ import { OrbitControls } from 'OrbitControls';
 import * as dat from 'dat.gui'
 import { depth } from 'three/webgpu';
 import { Evaluator, Operation, OperationGroup, GridMaterial, ADDITION, SUBTRACTION } from 'three-bvh-csg'
+import { floor } from 'three/webgpu';
 
 //Initialisations
 
@@ -143,7 +144,7 @@ floor2_geom.computeVertexNormals();
 
 const floor_v2 = new THREE.Mesh(floor2_geom, floorMaterial)
 
-vertices_floor[1] = vertices_floor[4] = vertices_floor[7] = vertices_floor[10] = -shedDimensions.height/2
+vertices_floor[1] = vertices_floor[4] = vertices_floor[7] = vertices_floor[10] = - shedDimensions.height / 2
 
 scene.add(floor_v2)
 
@@ -197,18 +198,33 @@ function updateWallColour(){
 
 function roofMaterialChoice_apex(endBits, slope1, slope2, tilesMaterial, slateMaterial, feltMaterial){
   if (shedDimensions.roofMaterial === "Tiles"){
-    endBits.material = tilesMaterial
     slope1.material = tilesMaterial
     slope2.material = tilesMaterial
   }else if (shedDimensions.roofMaterial === "Slate"){
-    endBits.material = slateMaterial
     slope1.material = slateMaterial
     slope2.material = slateMaterial
   }else{
-    endBits.material = feltMaterial
     slope1.material = feltMaterial
     slope2.material = feltMaterial
   }
+  endBits.material = shedMaterial
+
+  const endBits_uvs = new Float32Array([
+    0, 0,
+    1, 0,
+    0.5, 1,
+    1, 0,
+    0, 0,
+    0.5, 1
+  ])
+
+  endBits.geometry.setAttribute('uv', new THREE.BufferAttribute(endBits_uvs,2))
+
+  endBits.geometry.attributes.uv.needsUpdate = true
+
+
+
+
 }
 
 function roofMaterialChoice_flatRoof(flatRoof, tilesMaterial, slateMaterial, feltMaterial){
@@ -220,6 +236,8 @@ function roofMaterialChoice_flatRoof(flatRoof, tilesMaterial, slateMaterial, fel
     flatRoof.material = feltMaterial
   }
 }
+
+const roof_overhang = 1
 
 function buildApexRoof(){
 
@@ -331,6 +349,11 @@ function disposeGroup(group) {
 
 //Rebuild shed
 function rebuildBuilding(){
+
+    vertices_floor[1] = vertices_floor[4] = vertices_floor[7] = vertices_floor[10] = - shedDimensions.height / 2
+    floor2_geom.setAttribute('position', new THREE.BufferAttribute(vertices_floor, 3))
+    floor2_geom.attributes.position.needsUpdate = true
+
 
     console.log("width", shedDimensions.width)
     console.log("height", shedDimensions.height)
@@ -457,6 +480,8 @@ function rebuildBuilding(){
     if (shedDimensions.doorEnabled){
 
       hole_door.position.x = tempDoor.position.x = shedDimensions.doorPosition_x
+      hole_door.position.y = tempDoor.position.y = - shedDimensions.height / 2 + tempDoor.geometry.parameters.height / 2
+
       wallWidth2.add ( hole_door )
 
       //compute geometry evaluation
@@ -673,7 +698,6 @@ function rebuildBuilding(){
     }catch(error){
       console.log("no wall depth 2 side")
     }
-    
 }
 
 
