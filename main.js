@@ -355,19 +355,26 @@ function rebuildBuilding(){
     floor2_geom.setAttribute('position', new THREE.BufferAttribute(vertices_floor, 3))
     floor2_geom.attributes.position.needsUpdate = true
 
-    //build shed floor
-    let shed_floor = new THREE.Mesh(new THREE.BoxGeometry(shedDimensions.width, 0.1, shedDimensions.depth - 2 * wallThickness), shedMaterial)
+    
+    if(scene.getObjectByName("floor")){
+      console.log("RUNS THROUGH HERE!")
+      scene.remove(scene.getObjectByName("floor"));
+    }
+
+    let shed_floor_geom = new THREE.BoxGeometry( shedDimensions.width, 0.1, shedDimensions.depth - (2 * wallThickness))
+    let shed_floor = new THREE.Mesh( shed_floor_geom, shedMaterial )
+    shed_floor.name = "floor"
     shed_floor.position.y = - shedDimensions.height / 2
     scene.add(shed_floor)
 
-    console.log("width", shedDimensions.width)
-    console.log("height", shedDimensions.height)
-    console.log("depth", shedDimensions.depth)
+
+
+    console.log("shed floor", shed_floor.geometry.parameters)
+    console.log("shed floor visibility", shed_floor.visible)
 
 
     //remove old building
     const shedGroup = new THREE.Group()
-    console.log("shedGroup children phase 1", shedGroup.children)
 
     shedGroup.name = "shed"
     if (scene.getObjectByName("shed")){
@@ -454,7 +461,6 @@ function rebuildBuilding(){
 
       if (!uv) {
         wallSide.geometry.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(wallSide_vertices.length / 3 * 2), 2))
-        console.log("Now has uv")
      }
       
       for (let i = 0; i < wallSide_vertices.length; i += 3){
@@ -476,8 +482,6 @@ function rebuildBuilding(){
     }else{
       shedGroup.add(wallWidth1)
     }
-
-    console.log("shedGroup children phase 2", shedGroup.children)
     //define door side
     let wallWidth2 = new Operation( wallWidthGeom, shedMaterial )
     wallWidth2.position.z = tempDoor.position.z = - shedDimensions.depth / 2 + wallThickness / 2
@@ -500,7 +504,6 @@ function rebuildBuilding(){
 
       if (!uv) {
         doorSide.geometry.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(doorSide_vertices.length / 3 * 2), 2))
-        console.log("Now has uv")
      }
       
       for (let i = 0; i < doorSide_vertices.length; i += 3){
@@ -547,7 +550,6 @@ function rebuildBuilding(){
 
       if (!uv) {
         wallDepthSide1.geometry.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(wallDepthSide1_vertices.length / 3 * 2), 2))
-        console.log("Now has uv")
      }
       
       for (let i = 0; i < wallDepthSide1_vertices.length; i += 3){
@@ -592,7 +594,6 @@ function rebuildBuilding(){
 
       if (!uv) {
         wallDepthSide2.geometry.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(wallDepthSide2_vertices.length / 3 * 2), 2))
-        console.log("Now has uv")
      }
       
       for (let i = 0; i < wallDepthSide2_vertices.length; i += 3){
@@ -624,7 +625,6 @@ function rebuildBuilding(){
     }else if (shedDimensions.roof == "Apex"){
       const {slope1, slope2, endBits} = buildApexRoof()
       roofMaterialChoice_apex(endBits, slope1, slope2, tilesMaterial, slateMaterial, feltMaterial)
-      console.log("end bits", endBits)
       //roofMaterialChoice_apex()
       shedGroup.add(slope1, slope2, endBits)
     }
