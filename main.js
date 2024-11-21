@@ -221,10 +221,6 @@ function roofMaterialChoice_apex(endBits, slope1, slope2, tilesMaterial, slateMa
   endBits.geometry.setAttribute('uv', new THREE.BufferAttribute(endBits_uvs,2))
 
   endBits.geometry.attributes.uv.needsUpdate = true
-
-
-
-
 }
 
 function roofMaterialChoice_flatRoof(flatRoof, tilesMaterial, slateMaterial, feltMaterial){
@@ -237,7 +233,8 @@ function roofMaterialChoice_flatRoof(flatRoof, tilesMaterial, slateMaterial, fel
   }
 }
 
-const roof_overhang = 1
+const roof_overhang = 0.5
+const roof_angle = 25 //in degrees
 
 function buildApexRoof(){
 
@@ -245,23 +242,26 @@ function buildApexRoof(){
   let geometry2 = new THREE.BufferGeometry();
   let geometry3 = new THREE.BufferGeometry();
 
+  let roof_peak = ( (shedDimensions.width + 2 * wallThickness) / 2 ) * Math.atan(roof_angle * Math.PI / 180)
+  let roof_overhang_adjustor_y = (roof_overhang * roof_peak / (shedDimensions.width / 2 + wallThickness))
+
     // Slope 1
   const vertices_1 = new Float32Array([
 
-    shedDimensions.width / 2 + wallThickness, shedDimensions.height / 2, -shedDimensions.depth/2,
-    0, shedDimensions.height/2 + 2, -shedDimensions.depth / 2,
-    shedDimensions.width / 2 + wallThickness, shedDimensions.height / 2, shedDimensions.depth / 2,
-    0, shedDimensions.height / 2 + 2, shedDimensions.depth / 2,
+    shedDimensions.width / 2 + wallThickness + roof_overhang, shedDimensions.height / 2 - roof_overhang_adjustor_y, -shedDimensions.depth/2,
+    0, shedDimensions.height / 2 + roof_peak, -shedDimensions.depth / 2,
+    shedDimensions.width / 2 + wallThickness + roof_overhang, shedDimensions.height / 2 - roof_overhang_adjustor_y, shedDimensions.depth / 2,
+    0, shedDimensions.height / 2 + roof_peak, shedDimensions.depth / 2,
 
   ]);
 
     //Slope 2
   const vertices_2 = new Float32Array([
 
-    -shedDimensions.width / 2 - wallThickness, shedDimensions.height / 2, -shedDimensions.depth / 2,
-    0, shedDimensions.height / 2 + 2, -shedDimensions.depth / 2,
-    -shedDimensions.width / 2 - wallThickness, shedDimensions.height / 2, shedDimensions.depth / 2,
-    0, shedDimensions.height / 2 + 2, shedDimensions.depth / 2,
+    -shedDimensions.width / 2 - wallThickness - roof_overhang, shedDimensions.height / 2 - roof_overhang_adjustor_y, -shedDimensions.depth / 2,
+    0, shedDimensions.height / 2 + roof_peak, -shedDimensions.depth / 2,
+    -shedDimensions.width / 2 - wallThickness - roof_overhang, shedDimensions.height / 2 - roof_overhang_adjustor_y, shedDimensions.depth / 2,
+    0, shedDimensions.height / 2 + roof_peak, shedDimensions.depth / 2,
 
   ])
 
@@ -271,12 +271,12 @@ function buildApexRoof(){
     // Front triangle
     -shedDimensions.width / 2 - wallThickness, shedDimensions.height / 2, -shedDimensions.depth / 2,
     shedDimensions.width / 2 + wallThickness, shedDimensions.height / 2, -shedDimensions.depth / 2,
-    0, shedDimensions.height / 2 + 2, -shedDimensions.depth / 2,
+    0, shedDimensions.height / 2 + roof_peak, -shedDimensions.depth / 2,
     
     // Back triangle
     -shedDimensions.width / 2 - wallThickness, shedDimensions.height / 2, shedDimensions.depth / 2,
     shedDimensions.width / 2 + wallThickness, shedDimensions.height / 2, shedDimensions.depth / 2,
-    0, shedDimensions.height / 2 + 2, shedDimensions.depth / 2,
+    0, shedDimensions.height / 2 + roof_peak, shedDimensions.depth / 2,
 
   ])
 
