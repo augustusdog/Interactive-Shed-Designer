@@ -99,13 +99,9 @@ let shedDimensions = {
     doorPosition_x: 0,
     roof: "Apex",
     roofMaterial: "Slate",
-    wallColour: '#ff0000'
-}
-
-let widthPresets = {
-  'Small': 4,
-  'Medium': 6,
-  'Large': 8
+    wallColour: '#ff0000',
+    roof_overhang: 0.6,
+    roof_angle: 10
 }
 
 const wallThickness = 1
@@ -187,8 +183,10 @@ folder23.add(shedDimensions, "window3Position_y", -0.5, 0.5, 0.2).onFinishChange
 
 folder24.add(shedDimensions, "doorPosition_x", -1.5, 1.5, 0.5).onChange(rebuildBuilding).name("Door Position x")
 
-folder3.add(shedDimensions, "roof", ["Flat", "Apex"]).onChange(rebuildBuilding).name("Select Roof Type")
+folder3.add(shedDimensions, "roof", ["Flat", "Apex", "Pent"]).onChange(rebuildBuilding).name("Select Roof Type")
 folder3.add(shedDimensions, "roofMaterial", ["Tiles", "Slate", "Felt"]).onChange(rebuildBuilding).name("Select Roof Material")
+folder3.add(shedDimensions, "roof_overhang", 0, 1, 0.1).name("Roof Overhang").onChange(rebuildBuilding)
+folder3.add(shedDimensions, "roof_angle", 5, 40, 5).name("Roof Angle").onChange(rebuildBuilding)
 
 folder4.addColor(shedDimensions, 'wallColour').name('Colour of Walls').onChange(updateWallColour)
 
@@ -233,8 +231,111 @@ function roofMaterialChoice_flatRoof(flatRoof, tilesMaterial, slateMaterial, fel
   }
 }
 
-const roof_overhang = 0.5
-const roof_angle = 25 //in degrees
+function roofMaterialChoice_pent(pentSlope, tilesMaterial, slateMaterial, feltMaterial){
+  if (shedDimensions.roofMaterial === "Tiles"){
+    pentSlope.material = tilesMaterial
+  }else if (shedDimensions.roofMaterial === "Slate"){
+    pentSlope.material = slateMaterial
+  }else{
+    pentSlope.material = feltMaterial
+  }
+}
+
+function buildPentRoof(){
+  let geometry1 = new THREE.BufferGeometry();
+  let geometry2 = new THREE.BufferGeometry();
+  let geometry3 = new THREE.BufferGeometry();
+
+  let roof_peak = shedDimensions.depth * Math.tan( shedDimensions.roof_angle * Math.PI / 180) 
+
+  const vertices_1 = new Float32Array([
+    shedDimensions.width / 2 + wallThickness, shedDimensions.height / 2, shedDimensions.depth/2,
+    shedDimensions.width / 2 + wallThickness, shedDimensions.height/2 + roof_peak, -shedDimensions.depth/2,
+    -shedDimensions.width / 2 - wallThickness, shedDimensions.height / 2, shedDimensions.depth/2,
+    -shedDimensions.width / 2 - wallThickness, shedDimensions.height/2 + roof_peak, -shedDimensions.depth/2
+  ])
+
+  const vertices_2 = new Float32Array([
+    //side triangle 1
+    shedDimensions.width / 2 + wallThickness, shedDimensions.height/2 + roof_peak, -shedDimensions.depth / 2,
+    shedDimensions.width / 2 + wallThickness, shedDimensions.height/2, -shedDimensions.depth / 2,
+    shedDimensions.width / 2 + wallThickness, shedDimensions.height / 2, shedDimensions.depth/2,
+
+    //side triangle 2
+    -shedDimensions.width / 2 - wallThickness, shedDimensions.height/2 + roof_peak, -shedDimensions.depth / 2,
+    -shedDimensions.width / 2 - wallThickness, shedDimensions.height/2, -shedDimensions.depth / 2,
+    -shedDimensions.width / 2 - wallThickness, shedDimensions.height / 2, shedDimensions.depth/2,
+  ])
+
+  const vertices_3 = new Float32Array([
+    shedDimensions.width / 2 + wallThickness, shedDimensions.height/2 + roof_peak, -shedDimensions.depth/2,
+    shedDimensions.width / 2 + wallThickness, shedDimensions.height/2, -shedDimensions.depth / 2,
+    -shedDimensions.width / 2 - wallThickness, shedDimensions.height/2 + roof_peak, -shedDimensions.depth/2,
+    -shedDimensions.width / 2 - wallThickness, shedDimensions.height/2, -shedDimensions.depth / 2,
+  ])
+
+  const indices_pent1 = [
+    0, 1, 2,
+    2, 3, 1
+  ]
+
+  const indices_sides = [
+    0, 1, 2,
+    3, 4, 5
+  ]
+
+  const indices_front = [
+    0, 1, 2,
+    2, 3, 1
+  ]
+
+  const uvs = new Float32Array([
+    1, 0,
+    1, 1,
+    0, 0,
+    0, 1
+  ])
+
+  const side_uvs = new Float32Array([
+    1, 1,
+    1, 0,
+    0, 0,
+    0, 1,
+    0, 0,
+    1, 0
+  ])
+
+  const front_uvs = new Float32Array([
+    1, 1,
+    1, 0,
+    0, 1,
+    0, 0
+  ])
+
+
+  geometry1.setAttribute('uv', new THREE.BufferAttribute(uvs, 2))
+  geometry1.setAttribute('position', new THREE.BufferAttribute(vertices_1, 3));
+  geometry1.setIndex(indices_pent1);
+  geometry1.computeVertexNormals();
+
+  geometry2.setAttribute('uv', new THREE.BufferAttribute(side_uvs, 2))
+  geometry2.setAttribute('position', new THREE.BufferAttribute(vertices_2, 3));
+  geometry2.setIndex(indices_sides);
+  geometry2.computeVertexNormals
+
+  geometry3.setAttribute('uv', new THREE.BufferAttribute(front_uvs, 2))
+  geometry3.setAttribute('position', new THREE.BufferAttribute(vertices_3, 3));
+  geometry3.setIndex(indices_front);
+  geometry3.computeVertexNormals
+
+  const pentSlope = new THREE.Mesh(geometry1, tilesMaterial)
+  const sideBits = new THREE.Mesh(geometry2, shedMaterial)
+  const frontBit = new THREE.Mesh(geometry3, shedMaterial)
+
+  return { pentSlope, sideBits, frontBit }
+
+
+}
 
 function buildApexRoof(){
 
@@ -242,25 +343,24 @@ function buildApexRoof(){
   let geometry2 = new THREE.BufferGeometry();
   let geometry3 = new THREE.BufferGeometry();
 
-  let roof_peak = ( (shedDimensions.width + 2 * wallThickness) / 2 ) * Math.atan(roof_angle * Math.PI / 180)
-  let roof_overhang_adjustor_y = (roof_overhang * roof_peak / (shedDimensions.width / 2 + wallThickness))
+  let roof_peak = ( (shedDimensions.width + 2 * wallThickness) / 2 ) * Math.tan(shedDimensions.roof_angle * Math.PI / 180)
+  let roof_overhang_adjustor_y = (shedDimensions.roof_overhang * roof_peak / (shedDimensions.width / 2 + wallThickness))
 
     // Slope 1
   const vertices_1 = new Float32Array([
 
-    shedDimensions.width / 2 + wallThickness + roof_overhang, shedDimensions.height / 2 - roof_overhang_adjustor_y, -shedDimensions.depth/2,
+    shedDimensions.width / 2 + wallThickness + shedDimensions.roof_overhang, shedDimensions.height / 2 - roof_overhang_adjustor_y, -shedDimensions.depth/2,
     0, shedDimensions.height / 2 + roof_peak, -shedDimensions.depth / 2,
-    shedDimensions.width / 2 + wallThickness + roof_overhang, shedDimensions.height / 2 - roof_overhang_adjustor_y, shedDimensions.depth / 2,
+    shedDimensions.width / 2 + wallThickness + shedDimensions.roof_overhang, shedDimensions.height / 2 - roof_overhang_adjustor_y, shedDimensions.depth / 2,
     0, shedDimensions.height / 2 + roof_peak, shedDimensions.depth / 2,
-
   ]);
 
     //Slope 2
   const vertices_2 = new Float32Array([
 
-    -shedDimensions.width / 2 - wallThickness - roof_overhang, shedDimensions.height / 2 - roof_overhang_adjustor_y, -shedDimensions.depth / 2,
+    -shedDimensions.width / 2 - wallThickness - shedDimensions.roof_overhang, shedDimensions.height / 2 - roof_overhang_adjustor_y, -shedDimensions.depth / 2,
     0, shedDimensions.height / 2 + roof_peak, -shedDimensions.depth / 2,
-    -shedDimensions.width / 2 - wallThickness - roof_overhang, shedDimensions.height / 2 - roof_overhang_adjustor_y, shedDimensions.depth / 2,
+    -shedDimensions.width / 2 - wallThickness - shedDimensions.roof_overhang, shedDimensions.height / 2 - roof_overhang_adjustor_y, shedDimensions.depth / 2,
     0, shedDimensions.height / 2 + roof_peak, shedDimensions.depth / 2,
 
   ])
@@ -618,8 +718,8 @@ function rebuildBuilding(){
 
     //sort roof
     if (shedDimensions.roof == "Flat"){
-      let flatRoof = new THREE.Mesh(new THREE.BoxGeometry(shedDimensions.width + 2 * wallThickness, wallThickness, shedDimensions.depth), tilesMaterial)
-      flatRoof.position.y = shedDimensions.height / 2 + wallThickness/2
+      let flatRoof = new THREE.Mesh(new THREE.BoxGeometry(shedDimensions.width + 2 * wallThickness, 0.1, shedDimensions.depth), tilesMaterial)
+      flatRoof.position.y = shedDimensions.height / 2 + flatRoof.geometry.parameters.height / 2
       roofMaterialChoice_flatRoof(flatRoof, tilesMaterial, slateMaterial, feltMaterial)
       shedGroup.add(flatRoof)
     }else if (shedDimensions.roof == "Apex"){
@@ -627,6 +727,10 @@ function rebuildBuilding(){
       roofMaterialChoice_apex(endBits, slope1, slope2, tilesMaterial, slateMaterial, feltMaterial)
       //roofMaterialChoice_apex()
       shedGroup.add(slope1, slope2, endBits)
+    } else if (shedDimensions.roof == "Pent"){
+      const { pentSlope, sideBits, frontBit } = buildPentRoof()
+      roofMaterialChoice_pent(pentSlope, tilesMaterial, slateMaterial, feltMaterial)
+      shedGroup.add(pentSlope, sideBits, frontBit)
     }
 
     scene.add(shedGroup)
