@@ -5,7 +5,7 @@ canvas{
   z-index: 0;
 }
 
-#user_options{
+button{
   position: fixed;
   z-index: 20;
   color: white;

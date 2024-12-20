@@ -7,6 +7,11 @@ import { depth } from 'three/webgpu';
 import { Evaluator, Operation, OperationGroup, GridMaterial, ADDITION, SUBTRACTION } from 'three-bvh-csg'
 import { floor } from 'three/webgpu';
 
+//test async function
+function testFunc() {
+  console.log("hello")
+}
+
 //Initialisations
 
 //Scene
