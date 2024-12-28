@@ -7,12 +7,19 @@ import { depth } from 'three/webgpu';
 import { Evaluator, Operation, OperationGroup, GridMaterial, ADDITION, SUBTRACTION } from 'three-bvh-csg'
 import { floor } from 'three/webgpu';
 
-//test async function
-function testFunc() {
-  console.log("hello")
-}
 
 //Initialisations
+
+//button
+const button = document.getElementById("my-button")
+
+button.addEventListener("click", act)
+
+function act() {
+  shedDimensions.width = shedDimensions.width + 2
+  rebuildBuilding()
+  console.log("at least the text works..")
+}
 
 //Scene
 const scene = new THREE.Scene();
