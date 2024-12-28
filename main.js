@@ -11,14 +11,19 @@ import { floor } from 'three/webgpu';
 //Initialisations
 
 //button
-const button = document.getElementById("my-button")
+const openButton = document.getElementById("openPopup")
+const closeButton = document.getElementById("closePopup")
+const popup = document.getElementById("popup")
 
-button.addEventListener("click", act)
+openButton.addEventListener("click", act)
+closeButton.addEventListener("click", secondAct)
 
 function act() {
-  shedDimensions.width = shedDimensions.width + 2
-  rebuildBuilding()
-  console.log("at least the text works..")
+  popup.classList.add("open");
+}
+
+function secondAct() {
+  popup.classList.remove("open")
 }
 
 //Scene
