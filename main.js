@@ -78,7 +78,7 @@ feltTexture.repeat.set(2,2)
 //Materials
 const shedMaterial = new THREE.MeshBasicMaterial({color: 0x3f9b0b, map: shedTexture});
 shedMaterial.side = THREE.DoubleSide
-const floorMaterial = new THREE.MeshBasicMaterial({color: 0x3f9b0b, map: grassTexture});
+const floorMaterial = new THREE.MeshBasicMaterial({color: 0x3f9b0b}) //, map: grassTexture});
 const tilesMaterial_with_texture = new THREE.MeshBasicMaterial({ map: tilesTexture});
 const tilesMaterial = new THREE.MeshBasicMaterial({ map: tilesTexture});
 const slateMaterial = new THREE.MeshBasicMaterial({ map: slateTexture});
@@ -89,6 +89,8 @@ tilesMaterial.side = THREE.DoubleSide;
 const feltMaterial = new THREE.MeshBasicMaterial({map: feltTexture})
 feltMaterial.side = THREE.DoubleSide
 const doorMaterial = new THREE.MeshBasicMaterial({ map: doorTexture })
+const concreteMaterial = new THREE.MeshBasicMaterial({ color: 0x676767})
+const blackMaterial = new THREE.MeshBasicMaterial({color: 0x000000 })
 
 //Background
 scene.background = gardenTexture
@@ -133,10 +135,10 @@ csgEvaluator.useGroups = false;
 //add floor
 const floor2_geom = new THREE.BufferGeometry()
 const vertices_floor = new Float32Array([
-  -50, 5, 50, //1 + 4 + 7 + 10
-  50, 5, - 50, 
-  -50, 5, -50,
-  50, 5, 50])
+  -35, 5, 35, //1 + 4 + 7 + 10
+  35, 5, - 35, 
+  -35, 5, -35,
+  35, 5, 35])
 
 const indices_floor = [
   0, 3, 1,
@@ -157,10 +159,31 @@ floor2_geom.computeVertexNormals();
 
 const floor_v2 = new THREE.Mesh(floor2_geom, floorMaterial)
 
-vertices_floor[1] = vertices_floor[4] = vertices_floor[7] = vertices_floor[10] = - shedDimensions.height / 2
+vertices_floor[1] = vertices_floor[4] = vertices_floor[7] = vertices_floor[10] = -0.1 - shedDimensions.height / 2
 
 scene.add(floor_v2)
 
+//add platform floor
+
+const floor3_geom = new THREE.BufferGeometry()
+const vertices_floor3 = new Float32Array([
+  -6, 5, 6,
+  6, 5, -6,
+  -6, 5, -6,
+  6, 5, 6
+])
+
+floor3_geom.setAttribute('uv', new THREE.BufferAttribute(floor_uvs,2));
+floor3_geom.setAttribute('position', new THREE.BufferAttribute(vertices_floor3), 3);
+floor3_geom.setIndex(indices_floor);
+floor3_geom.computeVertexNormals();
+
+
+const floor_v3 = new THREE.Mesh(floor3_geom, concreteMaterial)
+
+vertices_floor3[1] = vertices_floor3[4] = vertices_floor3[7] = vertices_floor3[10] = - shedDimensions.height / 2
+
+scene.add(floor_v3)
 //User interface
 
 const gui = new dat.GUI()
@@ -173,9 +196,13 @@ var folder4 = gui.addFolder("Select Wall Colour")
 var folder21 = folder2.addFolder("Edit Window 1 Parameters")
 var folder22 = folder2.addFolder("Edit Window 2 Parameters")
 var folder23 = folder2.addFolder("Edit Window 3 Parameters")
-var folder24 = folder2.addFolder("Edit Door Parameters")
+//var folder24 = folder2.addFolder("Edit Door Parameters")
 
-folder1.add( shedDimensions, 'width', 4,10,2).onFinishChange(rebuildBuilding).name("Shed Width (Metres)")
+let shed_final = {
+  width: 8
+}
+
+folder1.add( shed_final, 'width', 4,10,2).onFinishChange(rebuildBuilding).name("Shed Width (Metres)")
 folder1.add( shedDimensions, 'height', 2,2.5,0.1).onFinishChange(rebuildBuilding).name("Shed Height (Metres)")
 folder1.add( shedDimensions, 'depth', 4,10,2).onFinishChange(rebuildBuilding).name("Shed Depth (Metres)")
 
@@ -198,7 +225,7 @@ folder23.add(shedDimensions, "window3Scale_y", 0.5, 1, 0.1).onFinishChange(rebui
 folder23.add(shedDimensions, "window3Position_z", -2, 2, 1).onFinishChange(rebuildBuilding).name('Window2 Position z')
 folder23.add(shedDimensions, "window3Position_y", -0.5, 0.5, 0.2).onFinishChange(rebuildBuilding).name('Window2 Position y')
 
-folder24.add(shedDimensions, "doorPosition_x", -1.5, 1.5, 0.5).onChange(rebuildBuilding).name("Door Position x")
+//folder24.add(shedDimensions, "doorPosition_x", -1.5, 1.5, 0.5).onChange(rebuildBuilding).name("Door Position x")
 
 folder3.add(shedDimensions, "roof", ["Flat", "Apex", "Pent"]).onChange(rebuildBuilding).name("Select Roof Type")
 folder3.add(shedDimensions, "roofMaterial", ["Tiles", "Slate", "Felt"]).onChange(rebuildBuilding).name("Select Roof Material")
@@ -466,11 +493,17 @@ function disposeGroup(group) {
 
 //Rebuild shed
 function rebuildBuilding(){
+    //correct shed width
+    shedDimensions.width = shed_final.width - 2*wallThickness
 
     //adjust floor to meet shed
-    vertices_floor[1] = vertices_floor[4] = vertices_floor[7] = vertices_floor[10] = - shedDimensions.height / 2
+    vertices_floor[1] = vertices_floor[4] = vertices_floor[7] = vertices_floor[10] = -0.1 - shedDimensions.height / 2
     floor2_geom.setAttribute('position', new THREE.BufferAttribute(vertices_floor, 3))
     floor2_geom.attributes.position.needsUpdate = true
+
+    vertices_floor3[1] = vertices_floor3[4] = vertices_floor3[7] = vertices_floor3[10] = - shedDimensions.height / 2
+    floor3_geom.setAttribute('position', new THREE.BufferAttribute(vertices_floor3, 3))
+    floor3_geom.attributes.position.needsUpdate = true
 
     
     if(scene.getObjectByName("floor")){
@@ -505,6 +538,57 @@ function rebuildBuilding(){
     hole_door.operation = SUBTRACTION;
 
     let tempDoor = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.0, wallThickness + 0.2), doorMaterial )
+
+    //new
+    let tempDoor_bar1 = new Operation( new THREE.BoxGeometry(0.8, 0.1, 0.1), shedMaterial)
+    tempDoor_bar1.operation = ADDITION
+
+    let tempDoor_bar2 = new Operation( new THREE.BoxGeometry(0.1, 0.8, 0.1), shedMaterial)
+    tempDoor_bar2.operation = ADDITION
+
+    let tempDoor_top = new Operation( new THREE.BoxGeometry(1.16, 0.2, 0.1), shedMaterial)
+    tempDoor_top.operation = ADDITION
+
+    let tempDoor_right = new Operation( new THREE.BoxGeometry(0.2, 1.96, 0.1), shedMaterial)
+    tempDoor_right.operation = ADDITION
+
+    let tempDoor_left = new Operation(new THREE.BoxGeometry(0.2, 1.96, 0.1), shedMaterial)
+    tempDoor_left.operation = ADDITION
+
+    let tempDoor_bottom = new Operation(new THREE.BoxGeometry(1.16, 0.98, 0.1), shedMaterial)
+    tempDoor_bottom.operation = ADDITION
+
+    let knob = new Operation(new THREE.BoxGeometry(0.04, 0.04, 0.04), blackMaterial)
+    knob.operation = ADDITION
+
+    let knob_handle = new Operation(new THREE.BoxGeometry(0.24, 0.04, 0.04), blackMaterial)
+    knob_handle.operation = ADDITION
+
+    tempDoor_bar1.position.z = tempDoor_bar2.position.z = tempDoor_top.position.z = tempDoor_right.position.z = tempDoor_left.position.z = tempDoor_bottom.position.z =  - wallThickness / 2
+    tempDoor_bar1.position.y = tempDoor_bar2.position.y = 0.4
+
+    tempDoor_top.position.y = 0.88
+
+    tempDoor_right.position.x = - 0.48
+    tempDoor_left.position.x = 0.48
+
+    tempDoor_bottom.position.y = - 0.49
+
+    knob.position.z = -0.08 - shedDimensions.depth / 2
+    knob.position.x = 0.34
+    knob.position.y = - 0.05
+
+    knob_handle.position.z = knob.position.z - 0.04
+    knob_handle.position.x = knob.position.x - 0.10
+    knob_handle.position.y = knob.position.y
+
+    let tempDoor_group = new OperationGroup()
+    tempDoor_group.add(hole_door, tempDoor_bar1, tempDoor_top, tempDoor_right, tempDoor_left, tempDoor_bottom, tempDoor_bar2)
+
+    let doorKnob_group = new OperationGroup()
+    doorKnob_group.add(knob, knob_handle)
+    
+    //end of new
 
     let frame_x = new Operation( new THREE.BoxGeometry( 2, 1.75, wallThickness), shedMaterial );
     frame_x.operation = ADDITION;
@@ -605,16 +689,16 @@ function rebuildBuilding(){
 
     if (shedDimensions.doorEnabled){
 
-      hole_door.position.x = tempDoor.position.x = shedDimensions.doorPosition_x
-      hole_door.position.y = tempDoor.position.y = - shedDimensions.height / 2 + tempDoor.geometry.parameters.height / 2
+      hole_door.position.x = tempDoor_group.position.x = doorKnob_group.position.x = tempDoor.position.x = shedDimensions.doorPosition_x
+      hole_door.position.y = tempDoor_group.position.y = doorKnob_group.position.y = tempDoor.position.y = - shedDimensions.height / 2 + tempDoor.geometry.parameters.height / 2
 
-      wallWidth2.add ( hole_door )
+      wallWidth2.add ( tempDoor_group )
 
       //compute geometry evaluation
       let doorSide = csgEvaluator.evaluateHierarchy(wallWidth2)
       doorSide.material = shedMaterial
 
-      shedGroup.add(doorSide, tempDoor)
+      shedGroup.add(doorSide, doorKnob_group)
 
       let doorSide_vertices = doorSide.geometry.attributes.position.array
       let uv = doorSide.geometry.attributes.uv
@@ -787,6 +871,10 @@ function rebuildBuilding(){
 
     if(windowGroup_z){
       disposeGroup(windowGroup_2z)
+    }
+
+    if(tempDoor_group){
+      disposeGroup(tempDoor_group)
     }
 
     try{
